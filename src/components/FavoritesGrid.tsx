@@ -373,22 +373,85 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
       )}
 
       {/* Local Favorites Grid */}
-      {hasLocalResults && (
-        <div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredAndSortedFavorites.map((item) => (
-              <FavoriteCard key={item.id} item={item} onEdit={onEdit} />
-            ))}
-          </div>
+      {hasLocalResults && (() => {
+        const isInFolder = state.selectedFolder !== null;
 
-          {/* Results Count */}
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            {filteredAndSortedFavorites.length} عنصر
-            {state.filter !== 'all' && ` - ${state.filter}`}
-            {state.searchQuery && ` - البحث: "${state.searchQuery}"`}
+        // If inside a folder: flat list (no grouping)
+        if (isInFolder) {
+          return (
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredAndSortedFavorites.map((item) => (
+                  <FavoriteCard key={item.id} item={item} onEdit={onEdit} />
+                ))}
+              </div>
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                {filteredAndSortedFavorites.length} عنصر
+              </div>
+            </div>
+          );
+        }
+
+        // In "all" view: group by type/category
+        const typeLabels: Record<string, string> = {
+          youtube: '🎬 يوتيوب',
+          website: '🌐 مواقع',
+          phone: '📞 أرقام هواتف',
+          location: '📍 مواقع جغرافية',
+          text: '📝 نصوص وملاحظات',
+          image: '🖼️ صور',
+        };
+
+        const typeOrder = ['youtube', 'website', 'phone', 'location', 'text', 'image'];
+
+        const grouped = filteredAndSortedFavorites.reduce((acc, item) => {
+          if (!acc[item.type]) acc[item.type] = [];
+          acc[item.type].push(item);
+          return acc;
+        }, {} as Record<string, typeof filteredAndSortedFavorites>);
+
+        const sortedGroups = typeOrder
+          .filter(type => grouped[type] && grouped[type].length > 0)
+          .map(type => ({ type, items: grouped[type] }));
+
+        // Add any types not in typeOrder
+        Object.keys(grouped).forEach(type => {
+          if (!typeOrder.includes(type)) {
+            sortedGroups.push({ type, items: grouped[type] });
+          }
+        });
+
+        return (
+          <div className="space-y-8">
+            {sortedGroups.map(({ type, items }) => (
+              <div key={type}>
+                {/* Section Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-base font-bold whitespace-nowrap">
+                    {typeLabels[type] || type}
+                  </h2>
+                  <div className="h-px flex-1 bg-border/60" />
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {items.length}
+                  </span>
+                </div>
+                {/* Items Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {items.map((item) => (
+                    <FavoriteCard key={item.id} item={item} onEdit={onEdit} />
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              {filteredAndSortedFavorites.length} عنصر
+              {state.filter !== 'all' && ` - ${state.filter}`}
+              {state.searchQuery && ` - البحث: "${state.searchQuery}"`}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

@@ -21,6 +21,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Youtube,
   Globe,
   Phone,
@@ -78,6 +88,7 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
   const { state, togglePin, deleteFavorite, setFloatingVideo, updateFavorite } = useApp();
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const Icon = typeIcons[item.type] || Type;
 
@@ -102,9 +113,8 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
   };
 
   const handleDelete = () => {
-    if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
-      deleteFavorite(item.id);
-    }
+    deleteFavorite(item.id);
+    setDeleteDialogOpen(false);
   };
 
   const moveToFolder = async (folderId: string | null) => {
@@ -294,7 +304,7 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
 
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-destructive">
                   <Trash2 className="ml-2 h-4 w-4" />
                   حذف
                 </DropdownMenuItem>
@@ -380,7 +390,7 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={handleDelete}
+                onClick={() => setDeleteDialogOpen(true)}
                 title="حذف"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -424,6 +434,24 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف "{item.title}" نهائياً من مفضلاتك. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              تأكيد الحذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -282,7 +282,25 @@ export function getStaticMapUrl(lat: number, lng: number, zoom: number = 15): st
   return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
 }
 
-// YouTube Search API (Browser compatible using Piped/Invidious with CORS bypass)
+// YouTube API key from environment
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
+
+// Helper to fetch with timeout
+async function fetchWithTimeout(url: string, timeoutMs: number = 8000): Promise<any> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
+// YouTube Search API — Primary: YouTube Data API v3, Fallback: Piped/Invidious
 export async function searchYouTube(query: string, maxResults: number = 10): Promise<Array<{
   videoId: string;
   title: string;
@@ -294,77 +312,103 @@ export async function searchYouTube(query: string, maxResults: number = 10): Pro
   views?: number;
   uploadedDate?: string;
 }>> {
-  // Reliable Piped & Invidious instances
-  const instances = [
+
+  // ── Strategy 1: YouTube Data API v3 (official, reliable) ──
+  if (YOUTUBE_API_KEY) {
+    try {
+      const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${maxResults}&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
+      const data = await fetchWithTimeout(apiUrl);
+
+      if (data?.items?.length > 0) {
+        return data.items.map((item: any) => ({
+          videoId: item.id?.videoId || '',
+          title: item.snippet?.title || 'بدون عنوان',
+          channelTitle: item.snippet?.channelTitle || '',
+          thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || `https://i.ytimg.com/vi/${item.id?.videoId}/mqdefault.jpg`,
+          description: item.snippet?.description || '',
+          channelUrl: item.snippet?.channelId ? `https://youtube.com/channel/${item.snippet.channelId}` : undefined,
+          uploadedDate: item.snippet?.publishedAt ? new Date(item.snippet.publishedAt).toLocaleDateString('ar-SA') : undefined,
+        })).filter((v: any) => v.videoId);
+      }
+    } catch (error) {
+      console.warn('YouTube Data API v3 failed, trying fallback:', error);
+    }
+  }
+
+  // ── Strategy 2: Piped API (free, no key needed) ──
+  const pipedInstances = [
     'https://pipedapi.kavin.rocks',
     'https://pipedapi.adminforge.de',
-    'https://api.piped.yt',
-    'https://invidious.jing.rocks/api/v1',
-    'https://inv.tux.digital/api/v1',
+    'https://pipedapi.in.projectsegfau.lt',
   ];
 
-  const proxy = 'https://api.allorigins.win/raw?url=';
-
-  for (const instance of instances) {
+  for (const instance of pipedInstances) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const isPiped = instance.includes('piped');
-      const apiUrl = isPiped
-        ? `${instance}/search?q=${encodeURIComponent(query)}&filter=videos`
-        : `${instance}/search?q=${encodeURIComponent(query)}&type=video`;
-
-      let data;
-      try {
-        const directResponse = await fetch(apiUrl, { signal: controller.signal });
-        if (directResponse.ok) {
-          data = await directResponse.json();
-        } else {
-          throw new Error('Direct failed');
-        }
-      } catch {
-        const proxiedResponse = await fetch(`${proxy}${encodeURIComponent(apiUrl)}`, { signal: controller.signal });
-        if (proxiedResponse.ok) {
-          data = await proxiedResponse.json();
-        } else {
-          continue;
-        }
+      const apiUrl = `${instance}/search?q=${encodeURIComponent(query)}&filter=videos`;
+      const data = await fetchWithTimeout(apiUrl, 6000);
+      const items = data?.items || (Array.isArray(data) ? data : []);
+      if (Array.isArray(items) && items.length > 0) {
+        const results = items
+          .filter((item: any) => item.type === 'stream' || item.url)
+          .slice(0, maxResults)
+          .map((item: any) => {
+            const videoId = item.url?.split('v=')[1] || item.url?.replace('/watch?v=', '');
+            if (!videoId) return null;
+            return {
+              videoId,
+              title: item.title || 'بدون عنوان',
+              channelTitle: item.uploaderName || item.uploader || '',
+              thumbnail: item.thumbnail || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+              description: item.shortDescription || '',
+            };
+          })
+          .filter(Boolean);
+        if (results.length > 0) return results as any;
       }
-
-      clearTimeout(timeoutId);
-      const items = isPiped ? (data?.items || data) : data;
-
-      if (!Array.isArray(items) || items.length === 0) continue;
-
-      return items
-        .filter((item: any) => isPiped ? (item.type === 'stream') : true)
-        .slice(0, maxResults)
-        .map((item: any) => {
-          const videoId = isPiped
-            ? (item.url?.split('v=')[1] || item.videoId)
-            : item.videoId;
-
-          if (!videoId) return null;
-
-          return {
-            videoId,
-            title: item.title || 'بدون عنوان',
-            channelTitle: isPiped ? (item.uploaderName || item.uploader) : item.author,
-            thumbnail: isPiped ? item.thumbnail : (item.videoThumbnails?.[0]?.url || `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`),
-            description: item.shortDescription || item.description || '',
-          };
-        }).filter(Boolean) as any;
-    } catch (error) {
+    } catch {
       continue;
     }
   }
 
+  // ── Strategy 3: Invidious API (free, no key needed) ──
+  const invidiousInstances = [
+    'https://vid.puffyan.us/api/v1',
+    'https://invidious.privacyredirect.com/api/v1',
+    'https://invidious.nerdvpn.de/api/v1',
+  ];
+
+  for (const instance of invidiousInstances) {
+    try {
+      const apiUrl = `${instance}/search?q=${encodeURIComponent(query)}&type=video`;
+      const data = await fetchWithTimeout(apiUrl, 6000);
+      const items = Array.isArray(data) ? data : (data?.items || []);
+      if (Array.isArray(items) && items.length > 0) {
+        const results = items
+          .slice(0, maxResults)
+          .map((item: any) => {
+            if (!item.videoId) return null;
+            return {
+              videoId: item.videoId,
+              title: item.title || 'بدون عنوان',
+              channelTitle: item.author || '',
+              thumbnail: item.videoThumbnails?.[0]?.url || `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`,
+              description: item.description || '',
+            };
+          })
+          .filter(Boolean);
+        if (results.length > 0) return results as any;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  console.error('All YouTube search methods failed.');
   return [];
 }
 
 
-// Search YouTube channels
+// Search YouTube channels — Primary: YouTube Data API v3, Fallback: Piped
 export async function searchYouTubeChannels(query: string, maxResults: number = 5): Promise<Array<{
   channelId: string;
   name: string;
@@ -374,27 +418,40 @@ export async function searchYouTubeChannels(query: string, maxResults: number = 
   videos?: number;
   url: string;
 }>> {
+
+  // ── Strategy 1: YouTube Data API v3 ──
+  if (YOUTUBE_API_KEY) {
+    try {
+      const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=${maxResults}&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
+      const data = await fetchWithTimeout(apiUrl);
+
+      if (data?.items?.length > 0) {
+        return data.items.map((item: any) => ({
+          channelId: item.snippet?.channelId || item.id?.channelId || '',
+          name: item.snippet?.channelTitle || item.snippet?.title || 'Unknown',
+          thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+          description: item.snippet?.description || '',
+          url: `https://youtube.com/channel/${item.snippet?.channelId || item.id?.channelId || ''}`,
+        })).filter((c: any) => c.channelId);
+      }
+    } catch (error) {
+      console.warn('YouTube Data API v3 channels search failed, trying fallback:', error);
+    }
+  }
+
+  // ── Strategy 2: Piped API ──
   const pipedInstances = [
     'https://pipedapi.kavin.rocks',
     'https://pipedapi.adminforge.de',
-    'https://api.piped.yt',
   ];
 
   for (const instance of pipedInstances) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-      const response = await fetch(
+      const data = await fetchWithTimeout(
         `${instance}/search?q=${encodeURIComponent(query)}&filter=channels`,
-        { signal: controller.signal }
+        6000
       );
-
-      clearTimeout(timeoutId);
-      if (!response.ok) continue;
-
-      const data = await response.json();
-      const items = data.items || data;
+      const items = data?.items || data;
 
       if (!Array.isArray(items) || items.length === 0) continue;
 
@@ -410,11 +467,11 @@ export async function searchYouTubeChannels(query: string, maxResults: number = 
           videos: item.videos,
           url: item.url ? `https://youtube.com${item.url}` : '',
         }));
-    } catch (error) {
-      console.warn(`Piped channel search failed:`, error);
+    } catch {
       continue;
     }
   }
+
   return [];
 }
 

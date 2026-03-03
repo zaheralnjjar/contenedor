@@ -7,7 +7,6 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { useApp } from '@/context/AppContext';
 import { Clipboard, Bell, Globe } from 'lucide-react';
 import {
@@ -100,36 +99,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                         <SelectItem value="es" disabled>Español (قريباً)</SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Supabase Configuration */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                            المزامنة السحابية (Supabase)
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="space-y-1">
-                                <Label>رابط المشروع (URL)</Label>
-                                <Input
-                                    className="font-mono text-sm"
-                                    placeholder="https://your-project.supabase.co"
-                                    value={state.settings.supabaseUrl || ''}
-                                    onChange={(e) => updateSettings({ supabaseUrl: e.target.value })}
-                                    dir="ltr"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label>مفتاح API (anon key)</Label>
-                                <Input
-                                    className="font-mono text-sm"
-                                    type="password"
-                                    placeholder="eyJh..."
-                                    value={state.settings.supabaseAnonKey || ''}
-                                    onChange={(e) => updateSettings({ supabaseAnonKey: e.target.value })}
-                                    dir="ltr"
-                                />
                             </div>
                         </div>
                     </div>

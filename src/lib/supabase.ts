@@ -84,42 +84,67 @@ export async function syncToCloud(data: SyncData): Promise<{ error: Error | null
       .from('favorites')
       .upsert(
         data.favorites.map(item => ({
-          ...item,
+          id: item.id,
           user_id: user.id,
-          metadata: JSON.stringify(item.metadata),
-          tags: JSON.stringify(item.tags),
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          url: item.url || null,
+          thumbnail: item.thumbnail || null,
+          tags: item.tags || [],
+          folder_id: item.folderId || null,
+          is_pinned: item.isPinned || false,
+          created_at: item.createdAt,
+          updated_at: item.updatedAt,
+          metadata: item.metadata || {},
         })),
         { onConflict: 'id' }
       );
 
-    if (favoritesError) throw favoritesError;
+    if (favoritesError) {
+      console.error('Favorites sync error:', favoritesError);
+      throw new Error(`خطأ في مزامنة المفضلات: ${favoritesError.message}`);
+    }
 
     // Sync tags
     const { error: tagsError } = await supabase
       .from('tags')
       .upsert(
         data.tags.map(tag => ({
-          ...tag,
+          id: tag.id,
           user_id: user.id,
+          name: tag.name,
+          color: tag.color,
+          count: tag.count || 0,
         })),
         { onConflict: 'id' }
       );
 
-    if (tagsError) throw tagsError;
+    if (tagsError) {
+      console.error('Tags sync error:', tagsError);
+      throw new Error(`خطأ في مزامنة الوسوم: ${tagsError.message}`);
+    }
 
-    // Sync folders
+    // Sync folders (optional - table may not exist yet)
     if (data.folders && data.folders.length > 0) {
       const { error: foldersError } = await supabase
         .from('folders')
         .upsert(
           data.folders.map(folder => ({
-            ...folder,
+            id: folder.id,
             user_id: user.id,
+            name: folder.name,
+            color: folder.color || '#64748b',
+            icon: folder.icon || 'Folder',
+            created_at: folder.createdAt,
           })),
           { onConflict: 'id' }
         );
 
-      if (foldersError) throw foldersError;
+      if (foldersError) {
+        // Don't break sync if folders table doesn't exist
+        console.warn('Folders sync warning:', foldersError);
+      }
     }
 
     // Update last sync timestamp
@@ -131,7 +156,9 @@ export async function syncToCloud(data: SyncData): Promise<{ error: Error | null
         device_info: navigator.userAgent,
       }, { onConflict: 'user_id' });
 
-    if (syncError) throw syncError;
+    if (syncError) {
+      console.warn('Sync metadata warning:', syncError);
+    }
 
     return { error: null };
   } catch (error) {
@@ -186,9 +213,18 @@ export async function syncFromCloud(): Promise<{ data: SyncData | null; error: E
 
     // Parse the data
     const parsedFavorites: FavoriteItem[] = (favorites || []).map(item => ({
-      ...item,
-      metadata: JSON.parse(item.metadata || '{}'),
-      tags: JSON.parse(item.tags || '[]'),
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      content: item.content,
+      url: item.url,
+      thumbnail: item.thumbnail,
+      tags: item.tags || [],
+      folderId: item.folder_id,
+      isPinned: item.is_pinned,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      metadata: item.metadata || {},
     }));
 
     const parsedTags: Tag[] = (tags || []).map(tag => ({

@@ -181,10 +181,15 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       toast.success('تمت المزامنة بنجاح');
     } catch (error) {
       console.error('Sync error:', error);
+      const errorMsg = error instanceof Error
+        ? error.message
+        : (typeof error === 'object' && error !== null && 'message' in error)
+          ? (error as any).message
+          : 'فشلت المزامنة - تحقق من اتصالك بالإنترنت';
       setStatus(prev => ({
         ...prev,
         isSyncing: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMsg,
       }));
       toast.error('فشلت المزامنة');
     }

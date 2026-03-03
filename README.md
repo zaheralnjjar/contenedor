@@ -1,73 +1,41 @@
-# React + TypeScript + Vite
+# Smart Favorites Manager 🚀
+مدير المفضلات الذكي مع تكامل يوتيوب ومزامنة سحابية
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+تطبيق حديث مبني باستخدام React + Vite + TypeScript لإدارة المفضلات (روابط، يوتيوب، مواقع، نصوص) مع ميزات بحث ذكية ومزامنة سحابية عبر Supabase.
 
-Currently, two official plugins are available:
+## ✨ الميزات الرئيسية
+- 🔍 **بحث ذكي مدمج**: بحث فوري في المفضلات ونتائج يوتيوب العالمية من الشريط العلوي.
+- 📺 **تكامل يوتيوب**: ابحث وشاهد الفيديوهات في مشغل عائم داخل التطبيق.
+- 📍 **خرائط جوجل**: حفظ المواقع الجغرافية مع عرض صور مصغرة للخريطة.
+- 📱 **واجهة عصرية**: تصميم زجاجي (Glassmorphism) مع دعم كامل للغة العربية (RTL).
+- ☁️ **مزامنة Supabase**: حفظ بياناتك بشكل سحابي وآمن والمزامنة عبر الأجهزة.
+- 📋 **تفاعل مع الحافظة**: تمييز المحتوى تلقائياً (رابط، هاتف، موقع) عند النسخ.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ الإعداد والتشغيل المحلي
+1. قم بتثبيت التبعيات:
+```bash
+npm install
+```
+2. قم بإنشاء ملف `.env` في المجلد الرئيسي وأضف مفاتيح Supabase:
+```env
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+3. ابدأ تشغيل خادم التطوير:
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 النشر على Vercel
+1. ارفع المشروع على **GitHub**.
+2. اربط مستودع GitHub بـ **Vercel**.
+3. تأكد من إضافة المتغيرات البيئية التالية في إعدادات Vercel (Settings > Environment Variables):
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+4. انتظر عملية البناء (Build) وسيصبح تطبيقك متاحاً عالمياً.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 💾 قاعدة البيانات (Supabase)
+يمكنك العثور على ملف `supabase/schema.sql` الذي يحتوي على جميع الجداول والسياسات الأمنية (RLS) المطلوبة. فقط قم بنسخ المحتوى وتشغيله في SQL Editor الخاص بـ Supabase.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+تم التطوير بواسطة **Antigravity AI**
