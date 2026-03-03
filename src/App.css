@@ -1,42 +1,269 @@
+/* ─── Base Layout ─── */
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0;
+  text-align: right;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ─── Mobile-First Responsive Overrides ─── */
+
+/* Container width adjustments */
+.container {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+@media (min-width: 768px) {
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+/* ─── Mobile Header ─── */
+@media (max-width: 640px) {
+  /* Reduce header height on mobile */
+  header .container {
+    height: 3.25rem !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Smaller logo on mobile */
+  header .container > div:first-child .h-10 {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  header .container > div:first-child .h-10 svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  /* Smaller action icons on mobile */
+  header button[class*="size-icon"],
+  header button.rounded-full {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  header button[class*="size-icon"] svg,
+  header button.rounded-full svg {
+    height: 1rem;
+    width: 1rem;
   }
 }
 
-.card {
-  padding: 2em;
+/* ─── Mobile Filter Bar ─── */
+@media (max-width: 640px) {
+  /* Reduce filter bar padding */
+  .border-b.bg-muted\/30 .container {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Smaller filter buttons */
+  .border-b.bg-muted\/30 button[class*="rounded-full"] {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    height: auto;
+    gap: 0.25rem;
+  }
+
+  .border-b.bg-muted\/30 button[class*="rounded-full"] svg {
+    height: 0.75rem;
+    width: 0.75rem;
+  }
+
+  /* Smaller folder buttons */
+  .border-b.bg-muted\/30 .border-b .flex button {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    height: auto;
+  }
+
+  .border-b.bg-muted\/30 .border-b .flex button svg {
+    height: 0.75rem;
+    width: 0.75rem;
+  }
+
+  /* Reduce spacing between sections */
+  .border-b.bg-muted\/30 .mb-3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .border-b.bg-muted\/30 .pb-3 {
+    padding-bottom: 0.5rem;
+  }
+
+  /* Tags: smaller badges on mobile */
+  .border-b.bg-muted\/30 [class*="badge"],
+  .border-b.bg-muted\/30 span[class*="Badge"] {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
 }
 
-.read-the-docs {
-  color: #888;
+/* ─── Mobile Cards Grid ─── */
+@media (max-width: 640px) {
+  /* Single column on mobile, fills width */
+  main .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Cards full width with reduced padding */
+  main .grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Category section headers: smaller on mobile */
+  main h2.text-base {
+    font-size: 0.85rem;
+  }
+
+  main .text-xs.text-muted-foreground.bg-muted {
+    font-size: 0.6rem;
+  }
+}
+
+/* ─── Mobile Card Improvements ─── */
+@media (max-width: 640px) {
+  /* Card content: reduce padding */
+  [class*="CardContent"] {
+    padding: 0.75rem;
+  }
+
+  /* Type badge smaller on mobile */
+  [class*="card"] .flex.items-center.gap-2 .text-xs {
+    font-size: 0.65rem;
+  }
+
+  /* Make card titles readable but not huge */
+  [class*="card"] h3,
+  [class*="card"] .font-semibold {
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+
+  /* Card description text */
+  [class*="card"] .text-muted-foreground.text-sm {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+}
+
+/* ─── Mobile Search ─── */
+@media (max-width: 640px) {
+  /* Mobile search bar */
+  .md\:hidden.border-t.p-4 {
+    padding: 0.5rem;
+  }
+
+  .md\:hidden.border-t.p-4 input {
+    font-size: 0.85rem;
+    height: 2.25rem;
+  }
+}
+
+/* ─── Mobile Dialog / Sync Dialog ─── */
+@media (max-width: 640px) {
+  /* Dialogs should fill more of the screen on mobile */
+  [role="dialog"] > div,
+  [class*="DialogContent"] {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+    margin: 0.5rem;
+    border-radius: 1rem;
+    overflow-y: auto;
+  }
+
+  /* Reduce dialog padding */
+  [class*="DialogContent"] {
+    padding: 1rem !important;
+  }
+
+  /* Dialog title smaller */
+  [class*="DialogTitle"] {
+    font-size: 1rem;
+  }
+
+  /* Dialog inputs */
+  [class*="DialogContent"] input {
+    font-size: 0.85rem;
+    height: 2.25rem;
+  }
+
+  [class*="DialogContent"] button {
+    font-size: 0.85rem;
+  }
+}
+
+/* ─── Mobile FAB ─── */
+@media (max-width: 640px) {
+  /* Position the FAB properly */
+  button[class*="floating"],
+  .fixed.bottom-6.left-6,
+  .fixed.bottom-6.right-6 {
+    bottom: 1rem;
+  }
+}
+
+/* ─── Mobile Footer / Status Bar ─── */
+@media (max-width: 640px) {
+  footer,
+  .pb-24 {
+    padding-bottom: 5rem;
+  }
+}
+
+/* ─── Smooth Scrolling ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Mobile Touch Improvements ─── */
+@media (max-width: 640px) {
+  /* Larger touch targets */
+  button {
+    min-height: 2rem;
+  }
+
+  /* Prevent text selection on interactive elements */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ─── Viewport Meta for Fullscreen Feel ─── */
+@media (max-width: 640px) {
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* ─── Mini Player Mobile ─── */
+@media (max-width: 640px) {
+  .fixed.bottom-4.right-4,
+  .fixed.bottom-4.left-4 {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
 }

@@ -73,11 +73,11 @@ export function Header({ onSyncClick }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
+      <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg">
-            <ClipboardList className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg">
+            <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
           </div>
           <div className="hidden sm:block">
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -93,7 +93,7 @@ export function Header({ onSyncClick }: HeaderProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
@@ -107,25 +107,28 @@ export function Header({ onSyncClick }: HeaderProps) {
           {/* Sync Button */}
           {isConfigured && (
             <Button
-              variant="ghost"
-              size="icon"
+              variant={isAuthenticated ? 'ghost' : 'outline'}
+              size="sm"
               onClick={onSyncClick}
-              className="rounded-full"
+              className={`rounded-full gap-1 px-2 sm:px-3 h-8 sm:h-9 ${!isAuthenticated ? 'border-dashed border-muted-foreground/50' : ''}`}
               title="المزامنة السحابية"
             >
               {isAuthenticated ? (
-                <Cloud className="h-5 w-5 text-green-500" />
+                <Cloud className="h-4 w-4 text-green-500" />
               ) : (
-                <CloudOff className="h-5 w-5 text-muted-foreground" />
+                <CloudOff className="h-4 w-4 text-muted-foreground" />
               )}
+              <span className="text-xs hidden xs:inline">
+                {isAuthenticated ? 'متصل' : 'سحابة'}
+              </span>
             </Button>
           )}
 
           {/* Settings Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Settings className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-9 sm:w-9">
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

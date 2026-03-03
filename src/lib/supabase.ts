@@ -106,23 +106,31 @@ export async function syncToCloud(data: SyncData): Promise<{ error: Error | null
       throw new Error(`خطأ في مزامنة المفضلات: ${favoritesError.message}`);
     }
 
-    // Sync tags
-    const { error: tagsError } = await supabase
-      .from('tags')
-      .upsert(
-        data.tags.map(tag => ({
-          id: tag.id,
-          user_id: user.id,
-          name: tag.name,
-          color: tag.color,
-          count: tag.count || 0,
-        })),
-        { onConflict: 'id' }
-      );
+    // Sync tags — delete existing and re-insert to avoid unique constraint conflicts
+    if (data.tags && data.tags.length > 0) {
+      // First delete all user tags
+      await supabase
+        .from('tags')
+        .delete()
+        .eq('user_id', user.id);
 
-    if (tagsError) {
-      console.error('Tags sync error:', tagsError);
-      throw new Error(`خطأ في مزامنة الوسوم: ${tagsError.message}`);
+      // Then insert fresh
+      const { error: tagsError } = await supabase
+        .from('tags')
+        .insert(
+          data.tags.map(tag => ({
+            id: tag.id,
+            user_id: user.id,
+            name: tag.name,
+            color: tag.color,
+            count: tag.count || 0,
+          }))
+        );
+
+      if (tagsError) {
+        console.error('Tags sync error:', tagsError);
+        throw new Error(`خطأ في مزامنة الوسوم: ${tagsError.message}`);
+      }
     }
 
     // Sync folders (optional - table may not exist yet)
