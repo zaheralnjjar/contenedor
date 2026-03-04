@@ -27,6 +27,13 @@ function AppContent() {
   useEffect(() => { favoritesRef.current = state.favorites; }, [state.favorites]);
   useEffect(() => { addToClipboardRef.current = addToClipboard; }, [addToClipboard]);
 
+  // Request notifications permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Clipboard monitoring - using copy event + focus + polling
   useEffect(() => {
     if (!state.settings.autoSaveClipboard) return;

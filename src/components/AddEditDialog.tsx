@@ -21,6 +21,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Youtube,
   Globe,
@@ -265,14 +268,32 @@ export function AddEditDialog({ open, onOpenChange, item }: AddEditDialogProps) 
           {/* Content */}
           <div className="space-y-2">
             <Label htmlFor="content">المحتوى *</Label>
-            <Textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="أدخل المحتوى هنا..."
-              rows={3}
-              dir="auto"
-            />
+            <Tabs defaultValue="edit" className="w-full">
+              <TabsList className="w-full justify-start rounded-b-none border-b-0">
+                <TabsTrigger value="edit">تعديل</TabsTrigger>
+                <TabsTrigger value="preview">معاينة</TabsTrigger>
+              </TabsList>
+              <TabsContent value="edit" className="mt-0">
+                <Textarea
+                  id="content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="أدخل المحتوى هنا... (يدعم ماركداون)"
+                  rows={5}
+                  dir="auto"
+                  className="rounded-t-none focus-visible:ring-0"
+                />
+              </TabsContent>
+              <TabsContent value="preview" className="mt-0 border rounded-b-md p-4 min-h-[120px] bg-muted/20 prose prose-sm dark:prose-invert max-w-none break-words" dir="auto">
+                {content ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="text-muted-foreground italic text-sm">المعاينة فارغة</span>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Title */}

@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { cn, formatRelativeTime, copyToClipboard, truncateText } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Ripple } from '@/components/ui/ripple';
 
 interface FavoriteCardProps {
   item: FavoriteItem;
@@ -278,6 +279,8 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect 
         )}
         onClick={handleCardClick}
       >
+        <Ripple />
+
         {/* Selection Mask / Checkbox Indicator */}
         {isSelectMode && (
           <div className="absolute top-2 right-2 z-20">
