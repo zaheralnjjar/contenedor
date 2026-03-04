@@ -63,7 +63,7 @@ export function SmartSearch() {
         const timer = setTimeout(async () => {
             setIsSearchingGlobal(true);
             try {
-                const results = await searchYouTube(search, 5);
+                const results = await searchYouTube(search, 50);
                 setGlobalResults(results);
             } catch (error) {
                 console.error('Global search error:', error);
@@ -160,9 +160,9 @@ export function SmartSearch() {
             </div>
 
             {open && search.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-3 bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
-                    <CommandPrimitive shouldFilter={false} className="flex flex-col max-h-[70vh]">
-                        <CommandPrimitive.List className="overflow-y-auto p-2" dir="rtl">
+                <div className="absolute top-full w-full left-1/2 -translate-x-1/2 mt-3 bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-300 md:w-[120%] lg:w-[140%] max-w-4xl">
+                    <CommandPrimitive shouldFilter={false} className="flex flex-col h-[70vh] max-h-[800px]">
+                        <CommandPrimitive.List className="overflow-y-auto p-2 w-full h-full scroll-smooth" dir="rtl">
                             {/* Loading State for Global Search */}
                             {isSearchingGlobal && (
                                 <div className="flex items-center justify-center py-6 text-muted-foreground gap-3">
@@ -222,7 +222,7 @@ export function SmartSearch() {
                                         <span>نتائج يوتيوب العالمية</span>
                                         <div className="h-px flex-1 bg-red-500/20" />
                                     </div>
-                                    <div className="grid gap-1">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-2">
                                         {globalResults.map((video) => (
                                             <CommandPrimitive.Item
                                                 key={video.videoId}
@@ -231,24 +231,24 @@ export function SmartSearch() {
                                                     setOpen(false);
                                                     setSearch('');
                                                 }}
-                                                className="flex items-center gap-4 cursor-pointer py-3 px-4 rounded-xl transition-all duration-200 hover:bg-red-500/5 group/yt aria-selected:bg-red-500/5"
+                                                className="flex flex-col gap-2 cursor-pointer p-2 rounded-xl border border-transparent transition-all duration-200 hover:bg-red-500/5 hover:border-red-500/20 group/yt aria-selected:bg-red-500/5 relative"
                                             >
-                                                <div className="relative flex-shrink-0 w-20 aspect-video rounded-lg overflow-hidden border border-border group-hover:border-red-500/30 transition-colors">
-                                                    <img src={video.thumbnail} alt="" className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <PlayIcon className="h-4 w-4 text-white fill-white" />
+                                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border group-hover/yt:border-red-500/40 transition-colors">
+                                                    <img src={video.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/yt:opacity-100 transition-opacity">
+                                                        <PlayIcon className="h-6 w-6 text-white fill-white shadow-sm" />
                                                     </div>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-semibold text-sm truncate">{video.title}</h4>
-                                                    <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                                                        <span className="truncate">{video.channelTitle}</span>
+                                                <div className="flex-1 w-full min-w-0 flex flex-col">
+                                                    <h4 className="font-semibold text-xs line-clamp-2 leading-tight flex-1">{video.title}</h4>
+                                                    <p className="text-[10px] text-muted-foreground mt-1 truncate group-hover/yt:text-primary transition-colors">
+                                                        {video.channelTitle}
                                                     </p>
                                                 </div>
                                                 <Button
                                                     size="icon"
                                                     variant="secondary"
-                                                    className="h-9 w-9 rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-primary hover:text-primary-foreground"
+                                                    className="absolute top-3 right-3 h-8 w-8 rounded-full opacity-0 group-hover/yt:opacity-100 transition-all hover:bg-primary hover:text-primary-foreground shadow-md z-10"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         addFavorite({
