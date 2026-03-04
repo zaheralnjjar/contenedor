@@ -37,7 +37,7 @@ interface HeaderProps {
 
 export function Header({ onSyncClick }: HeaderProps) {
   const { exportData, importData, clearClipboard } = useApp();
-  const { isConfigured, isAuthenticated } = useSync();
+  const { isAuthenticated } = useSync();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importDataText, setImportDataText] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -105,24 +105,22 @@ export function Header({ onSyncClick }: HeaderProps) {
           </Button>
 
           {/* Sync Button */}
-          {isConfigured && (
-            <Button
-              variant={isAuthenticated ? 'ghost' : 'outline'}
-              size="sm"
-              onClick={onSyncClick}
-              className={`rounded-full gap-1 px-2 sm:px-3 h-8 sm:h-9 ${!isAuthenticated ? 'border-dashed border-muted-foreground/50' : ''}`}
-              title="المزامنة السحابية"
-            >
-              {isAuthenticated ? (
-                <Cloud className="h-4 w-4 text-green-500" />
-              ) : (
-                <CloudOff className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className="text-xs hidden xs:inline">
-                {isAuthenticated ? 'متصل' : 'سحابة'}
-              </span>
-            </Button>
-          )}
+          <Button
+            variant={isAuthenticated ? 'ghost' : 'outline'}
+            size="sm"
+            onClick={onSyncClick}
+            className={`rounded-full gap-1 px-2 sm:px-3 h-8 sm:h-9 ${!isAuthenticated ? 'border-dashed border-muted-foreground/50' : ''}`}
+            title="المزامنة السحابية"
+          >
+            {isAuthenticated ? (
+              <Cloud className="h-4 w-4 text-green-500" />
+            ) : (
+              <CloudOff className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-xs hidden xs:inline">
+              {isAuthenticated ? 'متصل' : 'سحابة'}
+            </span>
+          </Button>
 
           {/* Settings Dropdown */}
           <DropdownMenu>
