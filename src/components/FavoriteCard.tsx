@@ -55,6 +55,9 @@ import { toast } from 'sonner';
 interface FavoriteCardProps {
   item: FavoriteItem;
   onEdit: (item: FavoriteItem) => void;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -84,7 +87,7 @@ const typeLabels: Record<string, string> = {
   image: 'صورة',
 };
 
-export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
+export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect }: FavoriteCardProps) {
   const { state, togglePin, deleteFavorite, setFloatingVideo, updateFavorite } = useApp();
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
@@ -92,7 +95,8 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
 
   const Icon = typeIcons[item.type] || Type;
 
-  const handleCopy = async () => {
+  const handleCopy = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     try {
       await copyToClipboard(item.content);
       toast.success('تم النسخ إلى الحافظة');
@@ -101,14 +105,44 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
     }
   };
 
-  const handleOpen = () => {
+  const openAppropriateLink = () => {
     if (item.url) {
       window.open(item.url, '_blank');
     } else if (item.type === 'phone') {
-      window.open(`tel:${item.content.replace(/\s/g, '')}`);
+      window.open(`tel:${item.content.replace(/\s/g, '')}`, '_self');
     } else if (item.type === 'location' && item.metadata.latitude && item.metadata.longitude) {
-      // Start driving navigation immediately in a new tab
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${item.metadata.latitude},${item.metadata.longitude}&travelmode=driving`, '_blank');
+    }
+  };
+
+  const handleOpen = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    openAppropriateLink();
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent triggering if clicked on inner buttons/menus/links
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('[role="menuitem"]')) {
+      return;
+    }
+
+    if (isSelectMode) {
+      onSelect?.(item.id);
+      return;
+    }
+
+    // Default action on click
+    if (item.type === 'youtube') {
+      const vId = item.metadata.videoId || (item.url?.includes('v=') ? item.url.split('v=')[1].split('&')[0] : '');
+      if (vId) setFloatingVideo({ videoId: vId, title: item.title });
+    } else if (item.type === 'location' && item.metadata.latitude && item.metadata.longitude) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${item.metadata.latitude},${item.metadata.longitude}&travelmode=driving`, '_blank');
+    } else if (item.type === 'image') {
+      setImageDialogOpen(true);
+    } else if (item.type === 'phone') {
+      window.open(`tel:${item.content.replace(/\s/g, '')}`, '_self');
+    } else {
+      onEdit(item);
     }
   };
 
@@ -235,10 +269,27 @@ export function FavoriteCard({ item, onEdit }: FavoriteCardProps) {
 
   return (
     <>
-      <Card className={cn(
-        'group relative overflow-hidden transition-all hover:shadow-lg',
-        item.isPinned && 'ring-2 ring-primary/20'
-      )}>
+      <Card
+        className={cn(
+          'group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer',
+          item.isPinned && 'ring-2 ring-primary/20',
+          isSelected && 'ring-2 ring-primary bg-primary/5',
+          isSelectMode && !isSelected && 'hover:bg-accent/50 opacity-90 hover:opacity-100'
+        )}
+        onClick={handleCardClick}
+      >
+        {/* Selection Mask / Checkbox Indicator */}
+        {isSelectMode && (
+          <div className="absolute top-2 right-2 z-20">
+            <div className={cn(
+              "w-5 h-5 rounded-full border-2 flex items-center justify-center bg-background",
+              isSelected ? "border-primary bg-primary" : "border-muted-foreground"
+            )}>
+              {isSelected && <div className="w-2.5 h-2.5 bg-primary-foreground rounded-full" />}
+            </div>
+          </div>
+        )}
+
         {/* Pin Indicator */}
         {item.isPinned && (
           <div className="absolute top-2 left-2 z-10">

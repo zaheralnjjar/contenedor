@@ -17,6 +17,10 @@ import {
   Eye,
   Clock,
   ExternalLink,
+  CheckSquare,
+  Share2,
+  Trash2,
+  X as XIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,6 +62,10 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
   const [ytChannels, setYtChannels] = useState<ChannelResult[]>([]);
   const [ytLoading, setYtLoading] = useState(false);
   const [ytSearched, setYtSearched] = useState(false);
+
+  // Selection mode state
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   // Debounced YouTube search when query changes
   const searchQuery = state.searchQuery.trim();
@@ -164,6 +172,68 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
     return result;
   }, [state.favorites, state.filter, state.searchQuery, state.selectedTags, state.sortBy, state.selectedFolder]);
 
+  const toggleSelectionMode = () => {
+    setIsSelectMode(!isSelectMode);
+    setSelectedItems(new Set());
+  };
+
+  const handleSelectItem = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === filteredAndSortedFavorites.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredAndSortedFavorites.map(item => item.id)));
+    }
+  };
+
+  const { deleteFavorite } = useApp();
+  const executeBulkDelete = () => {
+    if (selectedItems.size === 0) return;
+    if (window.confirm(`هل أنت متأكد من حذف ${selectedItems.size} عنصر؟`)) {
+      selectedItems.forEach(id => deleteFavorite(id));
+      setIsSelectMode(false);
+      setSelectedItems(new Set());
+      toast.success(`تم حذف ${selectedItems.size} عنصر بنجاح`);
+    }
+  };
+
+  const executeBulkShare = async () => {
+    if (selectedItems.size === 0) return;
+    const itemsToShare = filteredAndSortedFavorites.filter(item => selectedItems.has(item.id));
+    const textToShare = itemsToShare.map(item => {
+      let text = `${item.title}\n`;
+      if (item.url) text += `${item.url}\n`;
+      if (item.content) text += `${item.content}\n`;
+      return text;
+    }).join('\n---\n\n');
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'مشاركة مفضلات',
+          text: textToShare,
+        });
+        toast.success('تمت المشاركة بنجاح');
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(textToShare);
+      toast.success('تم نسخ المحتوى للمشاركة');
+    }
+    setIsSelectMode(false);
+    setSelectedItems(new Set());
+  };
+
   if (state.isLoading) {
     return (
       <div className="container px-4 py-6">
@@ -196,7 +266,56 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
   }
 
   return (
-    <div className="container px-4 py-6 space-y-8">
+    <div className="container px-4 py-6 space-y-8 relative">
+      {/* Selection Action Bar */}
+      {isSelectMode && (
+        <div className="sticky top-16 z-40 mb-6 bg-card border shadow-lg rounded-xl p-3 flex items-center justify-between animate-in slide-in-from-top-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={toggleSelectionMode}>
+              <XIcon className="h-4 w-4 ml-2" />
+              إلغاء
+            </Button>
+            <span className="font-semibold text-sm">
+              تم تحديد {selectedItems.size}
+            </span>
+            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+              <CheckSquare className="h-4 w-4 ml-2" />
+              تحديد الكل
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={executeBulkShare}
+              disabled={selectedItems.size === 0}
+            >
+              <Share2 className="h-4 w-4 ml-2" />
+              مشاركة
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={executeBulkDelete}
+              disabled={selectedItems.size === 0}
+            >
+              <Trash2 className="h-4 w-4 ml-2" />
+              حذف
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Header with Select Button */}
+      {!isSelectMode && hasLocalResults && (
+        <div className="flex justify-end mb-4">
+          <Button variant="outline" size="sm" onClick={toggleSelectionMode}>
+            <CheckSquare className="h-4 w-4 ml-2" />
+            تحديد عناصر
+          </Button>
+        </div>
+      )}
+
       {/* YouTube Search Results Section */}
       {showYtSection && (
         <div className="space-y-4">
@@ -382,7 +501,14 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredAndSortedFavorites.map((item) => (
-                  <FavoriteCard key={item.id} item={item} onEdit={onEdit} />
+                  <FavoriteCard
+                    key={item.id}
+                    item={item}
+                    onEdit={onEdit}
+                    isSelectMode={isSelectMode}
+                    isSelected={selectedItems.has(item.id)}
+                    onSelect={handleSelectItem}
+                  />
                 ))}
               </div>
               <div className="mt-6 text-center text-sm text-muted-foreground">
@@ -438,7 +564,14 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
                 {/* Items Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {items.map((item) => (
-                    <FavoriteCard key={item.id} item={item} onEdit={onEdit} />
+                    <FavoriteCard
+                      key={item.id}
+                      item={item}
+                      onEdit={onEdit}
+                      isSelectMode={isSelectMode}
+                      isSelected={selectedItems.has(item.id)}
+                      onSelect={handleSelectItem}
+                    />
                   ))}
                 </div>
               </div>
