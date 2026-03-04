@@ -2,14 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import type { FavoriteItem, Tag, AppSettings, Folder } from '@/types';
 
 // Get these from your Supabase project settings
-// For now, we'll use environment variables
-let currentUrl = import.meta.env.VITE_SUPABASE_URL || '';
-let currentKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// For now, we'll use environment variables or hardcoded values
+let currentUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wwqhyykbzcdrxjasbwzw.supabase.co';
+let currentKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3cWh5eWtiemNkcnhqYXNid3p3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTkxMjYsImV4cCI6MjA4ODEzNTEyNn0.yP3C4ij09L-oiG5RVbJj2SDbGcSPSLOPSzYmS2kbIn8';
 
 // Initialize with env vars or placeholders
 export let supabase = createClient(
-  currentUrl || 'https://placeholder.supabase.co',
-  currentKey || 'placeholder-key'
+  currentUrl,
+  currentKey
 );
 
 export function configureSupabase(url: string, key: string) {
