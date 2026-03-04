@@ -57,6 +57,8 @@ export interface AppSettings {
   language: 'ar' | 'es';
   supabaseUrl?: string;
   supabaseAnonKey?: string;
+  sequentialCopyMode?: boolean;
+  sequentialCopySeparator?: string;
   id?: string;
 }
 

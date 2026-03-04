@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { FavoriteItem, Tag, AppSettings, Folder } from '@/types';
+import type { FavoriteItem, Tag, AppSettings, Folder, ClipboardHistoryItem } from '@/types';
 
 // Get these from your Supabase project settings
 // For now, we'll use environment variables or hardcoded values
@@ -24,6 +24,7 @@ export interface SyncData {
   favorites: FavoriteItem[];
   tags: Tag[];
   folders: Folder[];
+  clipboardHistory: ClipboardHistoryItem[];
   settings: AppSettings;
   lastSync: number;
 }
@@ -155,6 +156,45 @@ export async function syncToCloud(data: SyncData): Promise<{ error: Error | null
       }
     }
 
+    // Sync clipboard history
+    if (data.clipboardHistory && data.clipboardHistory.length > 0) {
+      await supabase
+        .from('clipboard_history')
+        .delete()
+        .eq('user_id', user.id);
+
+      const { error: clipboardError } = await supabase
+        .from('clipboard_history')
+        .insert(
+          data.clipboardHistory.map(item => ({
+            id: item.id,
+            user_id: user.id,
+            type: item.type,
+            content: item.content,
+            timestamp: item.timestamp,
+            source_item_id: item.sourceItemId || null,
+          }))
+        );
+
+      if (clipboardError && clipboardError.code !== '42P01') {
+        console.warn('Clipboard sync warning:', clipboardError);
+      }
+    }
+
+    // Sync settings
+    if (data.settings) {
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          settings: data.settings,
+        }, { onConflict: 'user_id' });
+
+      if (settingsError && settingsError.code !== '42P01') {
+        console.warn('Settings sync warning:', settingsError);
+      }
+    }
+
     // Update last sync timestamp
     const { error: syncError } = await supabase
       .from('sync_metadata')
@@ -208,7 +248,29 @@ export async function syncFromCloud(): Promise<{ data: SyncData | null; error: E
       .select('*')
       .eq('user_id', user.id);
 
-    if (foldersError) throw foldersError;
+    if (foldersError && foldersError.code !== '42P01') throw foldersError;
+
+    // Fetch clipboard history
+    const { data: clipboardData, error: clipboardError } = await supabase
+      .from('clipboard_history')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('timestamp', { ascending: false });
+
+    if (clipboardError && clipboardError.code !== '42P01') {
+      console.warn('Clipboard fetch warning:', clipboardError);
+    }
+
+    // Fetch settings
+    const { data: settingsData, error: settingsError } = await supabase
+      .from('user_settings')
+      .select('settings')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError && settingsError.code !== 'PGRST116' && settingsError.code !== '42P01') {
+      console.warn('Settings fetch warning:', settingsError);
+    }
 
     // Fetch last sync
     const { data: syncMeta, error: syncError } = await supabase
@@ -243,18 +305,33 @@ export async function syncFromCloud(): Promise<{ data: SyncData | null; error: E
       ...folder,
     }));
 
+    const parsedClipboard: ClipboardHistoryItem[] = (clipboardData || []).map(item => ({
+      id: item.id,
+      type: item.type,
+      content: item.content,
+      timestamp: item.timestamp,
+      sourceItemId: item.source_item_id || undefined,
+    }));
+
+    const defaultSettings: AppSettings = {
+      autoSaveClipboard: true,
+      showNotifications: true,
+      backupEnabled: true,
+      backupInterval: 24,
+      language: 'ar',
+      sequentialCopyMode: false,
+      sequentialCopySeparator: '\n---\n',
+    };
+
+    const parsedSettings: AppSettings = settingsData ? { ...defaultSettings, ...settingsData.settings } : defaultSettings;
+
     return {
       data: {
         favorites: parsedFavorites,
         tags: parsedTags,
         folders: parsedFolders,
-        settings: {
-          autoSaveClipboard: true,
-          showNotifications: true,
-          backupEnabled: true,
-          backupInterval: 24,
-          language: 'ar',
-        },
+        clipboardHistory: parsedClipboard,
+        settings: parsedSettings,
         lastSync: syncMeta?.last_sync || Date.now(),
       },
       error: null,

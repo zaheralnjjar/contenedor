@@ -33,6 +33,7 @@ interface AppState {
   selectedTags: string[];
   selectedFolder: string | null;
   floatingVideo: FloatingVideo | null;
+  activeSequentialItemId: string | null;
 }
 
 type Action =
@@ -53,6 +54,7 @@ type Action =
   | { type: 'TOGGLE_TAG'; payload: string }
   | { type: 'SET_SELECTED_FOLDER'; payload: string | null }
   | { type: 'SET_FLOATING_VIDEO'; payload: FloatingVideo | null }
+  | { type: 'SET_ACTIVE_SEQUENTIAL_ITEM_ID'; payload: string | null }
   | { type: 'UPDATE_CLIPBOARD_ITEM_SOURCE'; payload: { id: string; sourceId: string } };
 
 const initialState: AppState = {
@@ -74,6 +76,7 @@ const initialState: AppState = {
   selectedTags: [],
   selectedFolder: null,
   floatingVideo: null,
+  activeSequentialItemId: null,
 };
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -133,6 +136,8 @@ function appReducer(state: AppState, action: Action): AppState {
       return { ...state, selectedFolder: action.payload };
     case 'SET_FLOATING_VIDEO':
       return { ...state, floatingVideo: action.payload };
+    case 'SET_ACTIVE_SEQUENTIAL_ITEM_ID':
+      return { ...state, activeSequentialItemId: action.payload };
     default:
       return state;
   }
@@ -158,6 +163,7 @@ interface AppContextType {
   setSelectedFolder: (id: string | null) => void;
   refreshData: () => Promise<void>;
   setFloatingVideo: (video: FloatingVideo | null) => void;
+  toggleSequentialCopy: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -294,8 +300,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await db.addToClipboardHistory(clipboardItem);
       dispatch({ type: 'ADD_CLIPBOARD_ITEM', payload: clipboardItem });
 
-      // Auto-save to favorites if enabled
-      if (state.settings.autoSaveClipboard) {
+      // Handle Sequential Copy
+      if (state.settings.sequentialCopyMode) {
+        if (state.activeSequentialItemId) {
+          const activeItem = state.favorites.find(f => f.id === state.activeSequentialItemId);
+          if (activeItem) {
+            const separator = typeof state.settings.sequentialCopySeparator === 'string'
+              ? state.settings.sequentialCopySeparator.replace(/\\n/g, '\n')
+              : '\n---\n';
+            const updatedItem = {
+              ...activeItem,
+              content: activeItem.content + separator + content,
+              updatedAt: Date.now()
+            };
+            await db.updateFavorite(updatedItem);
+            dispatch({ type: 'UPDATE_FAVORITE', payload: updatedItem });
+
+            // Link clipboard item
+            const updatedClipboardItem = { ...clipboardItem, sourceItemId: activeItem.id };
+            await db.addToClipboardHistory(updatedClipboardItem);
+            dispatch({ type: 'UPDATE_CLIPBOARD_ITEM_SOURCE', payload: { id: clipboardItem.id, sourceId: activeItem.id } });
+
+            if (state.settings.showNotifications) {
+              toast.success('تمت الإضافة للملف المتتابع');
+            }
+            return;
+          }
+        }
+      }
+
+      // Auto-save to favorites if enabled or sequential copy is active but no active item yet
+      if (state.settings.autoSaveClipboard || state.settings.sequentialCopyMode) {
         // Run asynchronously
         (async () => {
           try {
@@ -376,6 +411,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             await db.addFavorite(newFavorite);
             dispatch({ type: 'ADD_FAVORITE', payload: newFavorite });
 
+            // Set as active sequential item if mode is active
+            if (state.settings.sequentialCopyMode) {
+              dispatch({ type: 'SET_ACTIVE_SEQUENTIAL_ITEM_ID', payload: newFavorite.id });
+            }
+
             // Link clipboard item to the new favorite
             const updatedClipboardItem = { ...clipboardItem, sourceItemId: newFavorite.id };
             await db.addToClipboardHistory(updatedClipboardItem);
@@ -389,7 +429,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error adding to clipboard:', error);
     }
-  }, [state.settings.autoSaveClipboard]);
+  }, [state.settings, state.activeSequentialItemId, state.favorites]);
 
   const clearClipboard = useCallback(async () => {
     try {
@@ -440,6 +480,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toast.error('فشل حفظ الإعدادات');
     }
   }, [state.settings]);
+
+  const toggleSequentialCopy = useCallback(() => {
+    const newMode = !state.settings.sequentialCopyMode;
+    updateSettings({ sequentialCopyMode: newMode });
+
+    if (newMode) {
+      toast.success('تم تفعيل وضع النسخ المتتابع');
+    } else {
+      toast.info('تم إيقاف وضع النسخ المتتابع');
+      // Clear active sequential item
+      dispatch({ type: 'SET_ACTIVE_SEQUENTIAL_ITEM_ID', payload: null });
+    }
+  }, [state.settings.sequentialCopyMode, updateSettings]);
 
   const createTag = useCallback(async (name: string, color: string = '#3b82f6') => {
     try {
@@ -556,6 +609,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setSelectedFolder,
         refreshData,
         setFloatingVideo,
+        toggleSequentialCopy,
       }}
     >
       {children}

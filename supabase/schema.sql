@@ -64,11 +64,31 @@ CREATE TABLE IF NOT EXISTS sync_metadata (
   UNIQUE(user_id)
 );
 
+-- Create clipboard_history table
+CREATE TABLE IF NOT EXISTS clipboard_history (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  content TEXT NOT NULL,
+  timestamp BIGINT NOT NULL,
+  source_item_id UUID,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create user_settings table
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security on all tables
 ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE folders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_metadata ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clipboard_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
 -- Drop and recreate policies (safe to re-run)
 DROP POLICY IF EXISTS "Users can only access their own favorites" ON favorites;
@@ -87,6 +107,14 @@ DROP POLICY IF EXISTS "Users can only access their own sync metadata" ON sync_me
 CREATE POLICY "Users can only access their own sync metadata"
   ON sync_metadata FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only access their own clipboard history" ON clipboard_history;
+CREATE POLICY "Users can only access their own clipboard history"
+  ON clipboard_history FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can only access their own settings" ON user_settings;
+CREATE POLICY "Users can only access their own settings"
+  ON user_settings FOR ALL USING (auth.uid() = user_id);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_type ON favorites(type);
@@ -96,6 +124,7 @@ CREATE INDEX IF NOT EXISTS idx_favorites_folder_id ON favorites(folder_id);
 CREATE INDEX IF NOT EXISTS idx_tags_user_id ON tags(user_id);
 CREATE INDEX IF NOT EXISTS idx_folders_user_id ON folders(user_id);
 CREATE INDEX IF NOT EXISTS idx_sync_metadata_user_id ON sync_metadata(user_id);
+CREATE INDEX IF NOT EXISTS idx_clipboard_history_user_id ON clipboard_history(user_id);
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -127,4 +156,6 @@ GRANT ALL ON favorites TO authenticated;
 GRANT ALL ON tags TO authenticated;
 GRANT ALL ON folders TO authenticated;
 GRANT ALL ON sync_metadata TO authenticated;
+GRANT ALL ON clipboard_history TO authenticated;
+GRANT ALL ON user_settings TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;

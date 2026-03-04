@@ -38,7 +38,7 @@ const initialStatus: SyncStatus = {
 const SyncContext = createContext<SyncContextType | undefined>(undefined);
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
-  const { state, refreshData, exportData } = useApp();
+  const { state, exportData, importData } = useApp();
   const [status, setStatus] = useState<SyncStatus>(initialStatus);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -159,6 +159,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         favorites: parsedData.favorites,
         tags: parsedData.tags,
         folders: parsedData.folders || [],
+        clipboardHistory: parsedData.clipboard || [],
         settings: parsedData.settings,
         lastSync: Date.now(),
       });
@@ -172,8 +173,13 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
       if (cloudData) {
         // Merge cloud data with local data
-        // For now, we'll just refresh the local data
-        await refreshData();
+        await importData(JSON.stringify({
+          favorites: cloudData.favorites,
+          tags: cloudData.tags,
+          folders: cloudData.folders,
+          clipboard: cloudData.clipboardHistory,
+          settings: cloudData.settings,
+        }));
       }
 
       const lastSync = Date.now();
@@ -193,7 +199,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       }));
       toast.error('فشلت المزامنة');
     }
-  }, [isAuthenticated, exportData, refreshData]);
+  }, [isAuthenticated, exportData, importData]);
 
   const enableAutoSync = useCallback((intervalMinutes: number) => {
     if (autoSyncIntervalRef.current) {

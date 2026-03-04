@@ -26,6 +26,7 @@ import {
   Cloud,
   CloudOff,
   Search,
+  Link,
 } from 'lucide-react';
 import { useSync } from '@/context/SyncContext';
 import { SmartSearch } from './SmartSearch';
@@ -36,7 +37,7 @@ interface HeaderProps {
 }
 
 export function Header({ onSyncClick }: HeaderProps) {
-  const { exportData, importData, clearClipboard } = useApp();
+  const { exportData, importData, clearClipboard, state, toggleSequentialCopy } = useApp();
   const { isAuthenticated } = useSync();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importDataText, setImportDataText] = useState('');
@@ -94,7 +95,6 @@ export function Header({ onSyncClick }: HeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -102,6 +102,20 @@ export function Header({ onSyncClick }: HeaderProps) {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+          </Button>
+
+          {/* Sequential Copy Button */}
+          <Button
+            variant={state.settings.sequentialCopyMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={toggleSequentialCopy}
+            className={`rounded-full gap-1 px-2 sm:px-3 h-8 sm:h-9 ${!state.settings.sequentialCopyMode ? 'border-dashed border-muted-foreground/50' : ''}`}
+            title={state.settings.sequentialCopyMode ? 'إيقاف النسخ المتتابع' : 'تفعيل النسخ المتتابع'}
+          >
+            <Link className="h-4 w-4" />
+            <span className="text-xs hidden xs:inline">
+              {state.settings.sequentialCopyMode ? 'متصل' : 'تجميع'}
+            </span>
           </Button>
 
           {/* Sync Button */}

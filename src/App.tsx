@@ -9,6 +9,7 @@ import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { AddEditDialog } from '@/components/AddEditDialog';
 import { SyncDialog } from '@/components/SyncDialog';
 import { MiniPlayer } from './components/MiniPlayer';
+import { SequentialCopyBanner } from '@/components/SequentialCopyBanner';
 import type { FavoriteItem } from '@/types';
 import { Toaster } from '@/components/ui/sonner';
 import { readFromClipboard } from '@/lib/utils';
@@ -107,6 +108,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <SequentialCopyBanner />
       <Header onSyncClick={() => setSyncDialogOpen(true)} />
       <FilterBar />
       <main className="pb-24">
