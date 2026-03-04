@@ -42,11 +42,14 @@ interface SyncDialogProps {
 export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
   const { status, isConfigured, isAuthenticated, userEmail, login, register, logout, syncNow } = useSync();
   const { state, updateSettings } = useApp();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [supabaseUrl, setSupabaseUrl] = useState(state.settings.supabaseUrl || '');
+  const [supabaseAnonKey, setSupabaseAnonKey] = useState(state.settings.supabaseAnonKey || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,26 +91,80 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
     updateSettings({ backupInterval: parseInt(interval) });
   };
 
+  const handleConfigSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabaseUrl.trim() || !supabaseAnonKey.trim()) {
+      toast.error('يرجى إدخال الرابط والمفتاح');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await updateSettings({
+        supabaseUrl: supabaseUrl.trim(),
+        supabaseAnonKey: supabaseAnonKey.trim()
+      });
+      // The SyncContext effect might need a refresh or it should pick it up if updateSettings
+      // triggers a re-render or re-initializes. `isConfigured` is exported from `lib/supabase`,
+      // but modifying `updateSettings` calls `configureSupabase`, so we can force a reload 
+      // of the window to ensure everything binds correctly if it doesn't automatically.
+      window.location.reload();
+    } catch (error) {
+      toast.error('حدث خطأ أثناء حفظ الإعدادات');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isConfigured) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CloudOff className="h-5 w-5 text-muted-foreground" />
-              المزامنة السحابية
+              تكوين المزامنة السحابية
             </DialogTitle>
             <DialogDescription>
-              لم يتم تكوين Supabase بعد. يرجى إضافة متغيرات البيئة التالية:
+              الرجاء إدخال بيانات مشروع Supabase الخاص بك للبدء في المزامنة.
+              يمكنك الحصول عليها من إعدادات مشروعك في <a href="https://supabase.com/dashboard/project/_/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">لوحة التحكم</a>.
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-muted p-4 rounded-lg font-mono text-sm space-y-2">
-            <p>VITE_SUPABASE_URL=your_supabase_url</p>
-            <p>VITE_SUPABASE_ANON_KEY=your_anon_key</p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            يمكنك الحصول على هذه المفاتيح من لوحة تحكم Supabase.
-          </p>
+
+          <form onSubmit={handleConfigSubmit} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="supabaseUrl">Supabase Project URL</Label>
+              <Input
+                id="supabaseUrl"
+                value={supabaseUrl}
+                onChange={(e) => setSupabaseUrl(e.target.value)}
+                placeholder="https://xxxx.supabase.co"
+                dir="ltr"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supabaseAnonKey">Supabase Anon Key</Label>
+              <Input
+                id="supabaseAnonKey"
+                value={supabaseAnonKey}
+                onChange={(e) => setSupabaseAnonKey(e.target.value)}
+                placeholder="eyJh..."
+                type="password"
+                dir="ltr"
+                required
+              />
+            </div>
+
+            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Settings className="h-4 w-4" />
+              )}
+              حفظ الإعدادات
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     );
@@ -126,8 +183,8 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
             المزامنة السحابية
           </DialogTitle>
           <DialogDescription>
-            {isAuthenticated 
-              ? 'متصل بالسحابة - بياناتك متزامنة' 
+            {isAuthenticated
+              ? 'متصل بالسحابة - بياناتك متزامنة'
               : 'سجل الدخول لمزامنة بياناتك مع السحابة'}
           </DialogDescription>
         </DialogHeader>
@@ -184,8 +241,8 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
                 onClick={() => setIsRegistering(!isRegistering)}
                 className="text-sm text-primary hover:underline"
               >
-                {isRegistering 
-                  ? 'لديك حساب؟ سجل الدخول' 
+                {isRegistering
+                  ? 'لديك حساب؟ سجل الدخول'
                   : 'ليس لديك حساب؟ سجل الآن'}
               </button>
             </div>
@@ -214,8 +271,8 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">آخر مزامنة</span>
                 <span className="text-sm font-medium">
-                  {status.lastSync 
-                    ? formatRelativeTime(status.lastSync) 
+                  {status.lastSync
+                    ? formatRelativeTime(status.lastSync)
                     : 'لم تتم المزامنة بعد'}
                 </span>
               </div>
