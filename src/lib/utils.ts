@@ -283,7 +283,8 @@ export function getStaticMapUrl(lat: number, lng: number, zoom: number = 15): st
 }
 
 // YouTube API key from environment
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
+// Add fallback to hardcoded key to fix Vercel deployments where env vars might be missing
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyAyKMelM6hig9AP8-KZN5W3-kcoDhLn8oU';
 
 // Helper to fetch with timeout
 async function fetchWithTimeout(url: string, timeoutMs: number = 8000): Promise<any> {
