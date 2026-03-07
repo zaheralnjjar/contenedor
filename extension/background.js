@@ -1,4 +1,4 @@
-import * as supabaseLib from './lib/supabase.umd.js';
+importScripts('lib/supabase.umd.js');
 
 let supabaseClient = null;
 let currentUserId = null;
@@ -13,7 +13,7 @@ async function initSupabase() {
     ]);
 
     if (supabaseUrl && supabaseKey) {
-        supabaseClient = supabaseLib.createClient(supabaseUrl, supabaseKey, {
+        supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
             auth: {
                 autoRefreshToken: true,
                 persistSession: false,

@@ -1,5 +1,3 @@
-import { createClient } from './lib/supabase.umd.js';
-
 document.addEventListener('DOMContentLoaded', () => {
     const supabaseUrlEl = document.getElementById('supabaseUrl');
     const supabaseKeyEl = document.getElementById('supabaseKey');
@@ -38,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.textContent = 'جاري الاتصال...';
 
             // Test Connection and Login
-            const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email,
                 password,
             });
