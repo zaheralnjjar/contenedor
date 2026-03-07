@@ -1,0 +1,27 @@
+{
+    "manifest_version": 3,
+    "name": "Favorites Manager Save",
+    "version": "1.0",
+    "description": "احفظ النصوص والروابط مباشرة إلى تطبيق مدير المفضلات الخاص بك في السحابة.",
+    "permissions": [
+        "contextMenus",
+        "storage",
+        "notifications"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "إعدادات المزامنة"
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}

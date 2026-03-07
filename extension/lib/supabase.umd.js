@@ -1,0 +1,1 @@
+Couldn't find the requested file /dist/umd/supabase.umd.js in @supabase/supabase-js.
