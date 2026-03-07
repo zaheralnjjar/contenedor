@@ -78,16 +78,20 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         if (info.selectionText) {
             content = info.selectionText;
             type = detectType(content);
-        } else if (info.linkUrl) {
-            content = info.linkUrl;
-            url = info.linkUrl;
-            type = detectType(info.linkUrl);
-        } else if (info.srcUrl) {  // Image
+        } else if (info.mediaType === 'image' && info.srcUrl) {  // Image takes priority over link if an image is right-clicked
             content = info.srcUrl;
             url = info.srcUrl;
             thumbnail = info.srcUrl;
             title = "صورة سريعة";
             type = "image";
+        } else if (info.linkUrl) {
+            content = info.linkUrl;
+            url = info.linkUrl;
+            type = detectType(info.linkUrl);
+        } else if (info.srcUrl) { // Fallback for other media types (video/audio)
+            content = info.srcUrl;
+            url = info.srcUrl;
+            type = "website";
         } else { // Fallback to page URL
             content = info.pageUrl;
             type = "website";
