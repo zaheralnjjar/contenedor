@@ -120,17 +120,19 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CloudOff className="h-5 w-5 text-muted-foreground" />
-              تكوين المزامنة السحابية
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              <div className="bg-primary/10 p-2 rounded-full text-primary">
+                <CloudOff className="h-6 w-6" />
+              </div>
+              تكوين الربط السحابي (Supabase)
             </DialogTitle>
-            <DialogDescription>
-              الرجاء إدخال بيانات مشروع Supabase الخاص بك للبدء في المزامنة.
-              يمكنك الحصول عليها من إعدادات مشروعك في <a href="https://supabase.com/dashboard/project/_/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">لوحة التحكم</a>.
+            <DialogDescription className="text-sm pt-2">
+              للاستفادة من المزامنة بين أجهزتك وتخزين مفضلاتك بأمان، أدخل بيانات مشروع Supabase الخاص بك.
+              يمكنك الحصول عليها من <a href="https://supabase.com/dashboard/project/_/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">لوحة تحكم Supabase</a>.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleConfigSubmit} className="space-y-4 py-4">
+          <form onSubmit={handleConfigSubmit} className="space-y-5 py-4">
             <div className="space-y-2">
               <Label htmlFor="supabaseUrl">Supabase Project URL</Label>
               <Input
@@ -156,13 +158,13 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
               />
             </div>
 
-            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+            <Button type="submit" className="w-full gap-2 text-md h-11 transition-transform active:scale-95" disabled={isLoading}>
               {isLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-5 w-5 animate-spin" />
               ) : (
-                <Settings className="h-4 w-4" />
+                <Settings className="h-5 w-5" />
               )}
-              حفظ الإعدادات
+              حفظ وبدء المزامنة
             </Button>
           </form>
         </DialogContent>
@@ -174,18 +176,16 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <Cloud className="h-5 w-5 text-green-500" />
-            ) : (
-              <CloudOff className="h-5 w-5 text-muted-foreground" />
-            )}
-            المزامنة السحابية
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+            <div className={`p-2 rounded-full ${isAuthenticated ? 'bg-green-100 text-green-600' : 'bg-primary/10 text-primary'}`}>
+              {isAuthenticated ? <Cloud className="h-6 w-6" /> : <CloudOff className="h-6 w-6" />}
+            </div>
+            السحابة الذكية
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="pt-2">
             {isAuthenticated
-              ? 'متصل بالسحابة - بياناتك متزامنة'
-              : 'سجل الدخول لمزامنة بياناتك مع السحابة'}
+              ? 'أنت متصل بالسحابة العلوية. جميع بياناتك يتم حفظها تلقائياً وبأمان تام.'
+              : 'قم بتسجيل الدخول للاستمتاع بالمزامنة السحابية الذكية للوصول لمفضلاتك من أي مكان.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -225,25 +225,25 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 text-md transition-transform active:scale-95" disabled={isLoading}>
               {isLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-5 w-5 animate-spin" />
               ) : isRegistering ? (
-                'إنشاء حساب'
+                'إنشاء حساب جديد'
               ) : (
-                'تسجيل الدخول'
+                'تسجيل الدخول وبدء المزامنة'
               )}
             </Button>
 
-            <div className="text-center">
+            <div className="text-center pt-2">
               <button
                 type="button"
                 onClick={() => setIsRegistering(!isRegistering)}
-                className="text-sm text-primary hover:underline"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 {isRegistering
-                  ? 'لديك حساب؟ سجل الدخول'
-                  : 'ليس لديك حساب؟ سجل الآن'}
+                  ? 'لديك حساب أصلًا؟ قم بتسجيل الدخول'
+                  : 'مستخدم جديد؟ اضغط هنا لإنشاء حساب'}
               </button>
             </div>
           </form>
@@ -267,10 +267,10 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
             </div>
 
             {/* Sync Status */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">آخر مزامنة</span>
-                <span className="text-sm font-medium">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3 rounded-lg">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">آخر عملية مزامنة</span>
+                <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   {status.lastSync
                     ? formatRelativeTime(status.lastSync)
                     : 'لم تتم المزامنة بعد'}
@@ -278,23 +278,23 @@ export function SyncDialog({ open, onOpenChange }: SyncDialogProps) {
               </div>
 
               {status.error && (
-                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
-                  <AlertCircle className="h-4 w-4" />
-                  {status.error}
+                <div className="flex items-start gap-3 text-sm text-red-600 bg-red-50 border border-red-100 p-3 rounded-lg">
+                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                  <p>{status.error}</p>
                 </div>
               )}
 
               <Button
                 onClick={handleSync}
                 disabled={status.isSyncing}
-                className="w-full gap-2"
+                className="w-full gap-2 h-11 text-md shadow-sm transition-all hover:shadow-md active:scale-95"
               >
                 {status.isSyncing ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <RefreshCw className="h-5 w-5 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-5 w-5" />
                 )}
-                {status.isSyncing ? 'جاري المزامنة...' : 'مزامنة الآن'}
+                {status.isSyncing ? 'جاري رفع ومزامنة البيانات...' : 'مزامنة بياناتي الآن'}
               </Button>
             </div>
 

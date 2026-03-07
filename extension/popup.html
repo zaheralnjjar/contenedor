@@ -3,135 +3,238 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم الإضافة - المفضلات</title>
+    <title>الميزة الذكية للإضافة</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            width: 320px;
-            padding: 16px;
-            margin: 0;
-            background-color: #f8fafc;
-            color: #0f172a;
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
         }
 
-        h2 {
-            margin-top: 0;
-            font-size: 16px;
-            color: #1e293b;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            width: 340px;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
         }
 
+        .header p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .container {
+            padding: 0 16px 20px 16px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
         .form-group {
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         label {
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text);
         }
 
         input {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             box-sizing: border-box;
             font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: #fcfcfc;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background-color: #fff;
         }
 
         button {
             width: 100%;
-            padding: 10px;
-            background-color: #3b82f6;
+            padding: 12px;
+            background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 8px;
             font-size: 14px;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         button:hover {
-            background-color: #2563eb;
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         .status {
-            margin-top: 12px;
+            margin-top: 16px;
             font-size: 13px;
             text-align: center;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 8px;
             display: none;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .success {
-            background-color: #dcfce7;
-            color: #166534;
+            background-color: #ecfdf5;
+            color: var(--success);
+            border: 1px solid #a7f3d0;
             display: block;
         }
 
         .error {
-            background-color: #fee2e2;
-            color: #991b1b;
+            background-color: #fef2f2;
+            color: var(--error);
+            border: 1px solid #fecaca;
             display: block;
         }
 
-        hr {
-            border: 0;
-            border-top: 1px solid #e2e8f0;
-            margin: 16px 0;
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
         }
 
-        .info-text {
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .divider span {
+            padding: 0 10px;
+            color: var(--text-muted);
             font-size: 12px;
-            color: #64748b;
+            font-weight: 500;
+        }
+
+        .footer {
             text-align: center;
-            margin-bottom: 0;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
         }
     </style>
 </head>
 
 <body>
-    <h2>⚙️ لوحة تحكم المزامنة</h2>
-
-    <div id="setup-form">
-        <div class="form-group">
-            <label>رابط Supabase URL</label>
-            <input type="text" id="supabaseUrl" placeholder="https://xxx.supabase.co" dir="ltr">
-        </div>
-        <div class="form-group">
-            <label>مفتاح Supabase Key</label>
-            <input type="password" id="supabaseKey" placeholder="eyJh..." dir="ltr">
-        </div>
-
-        <hr>
-
-        <div class="form-group">
-            <label>البريد الإلكتروني (لتسجيل الدخول)</label>
-            <input type="email" id="email" placeholder="email@example.com" dir="ltr">
-        </div>
-        <div class="form-group">
-            <label>كلمة المرور</label>
-            <input type="password" id="password" placeholder="••••••••" dir="ltr">
-        </div>
-
-        <button id="saveBtn">حفظ وتسجيل الدخول</button>
+    <div class="header">
+        <h2>☁️ سحابة المفضلات</h2>
+        <p>مزامنة مباشرة وسريعة بضغطة زر</p>
     </div>
 
-    <div id="statusMsg" class="status"></div>
+    <div class="container">
+        <div class="card" id="setup-form">
+            <div class="form-group">
+                <label>رابط منصة Supabase (URL)</label>
+                <input type="text" id="supabaseUrl" placeholder="https://xxx.supabase.co" dir="ltr">
+            </div>
+            <div class="form-group">
+                <label>مفتاح التوثيق (Anon Key)</label>
+                <input type="password" id="supabaseKey" placeholder="eyJh..." dir="ltr">
+            </div>
 
-    <p class="info-text">
-        بمجرد الاتصال، انقر Right-Click على أي نص أو رابط في أي موقع لحفظه مباشرة في تطبيقك.
-    </p>
+            <div class="divider">
+                <span>بيانات الحساب</span>
+            </div>
 
-    <!-- <script src="lib/supabase.umd.js"></script> -->
-    <!-- Note: Due to Manifest V3 policy on external/dynamic code execution, 
-       we bundle the interaction logic in popup.js -->
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="email" placeholder="your@email.com" dir="ltr">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="password" placeholder="••••••••" dir="ltr">
+            </div>
+
+            <button id="saveBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                اتصال وتسجيل الدخول
+            </button>
+        </div>
+
+        <div id="statusMsg" class="status"></div>
+
+        <div class="footer">
+            بمجرد الربط بنجاح، يمكنك تظليل أي نص أو الضغط بالزر الأيمن على أي رابط في المتصفح واختيار <strong>"حفظ في
+                مدير المفضلات"</strong>.
+        </div>
+    </div>
+
     <script src="popup.js" type="module"></script>
 </body>
 
