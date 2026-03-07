@@ -1,3 +1,5 @@
+import { createClient } from './lib/supabase.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     const supabaseUrlEl = document.getElementById('supabaseUrl');
     const supabaseKeyEl = document.getElementById('supabaseKey');
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.textContent = 'جاري الاتصال...';
 
             // Test Connection and Login
-            const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            const supabaseClient = createClient(supabaseUrl, supabaseKey);
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email,
                 password,
