@@ -47,7 +47,7 @@ export interface ClipboardHistoryItem {
 
 export type FilterType = 'all' | ContentType;
 
-export type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'pinned';
+export type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'pinned' | 'size' | 'subject';
 
 export interface AppSettings {
   autoSaveClipboard: boolean;

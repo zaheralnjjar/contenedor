@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import type { FavoriteItem, ClipboardHistoryItem, AppSettings, Tag, ContentType, FilterType, Folder } from '@/types';
+import type { FavoriteItem, ClipboardHistoryItem, AppSettings, Tag, ContentType, FilterType, Folder, SortOption } from '@/types';
 import * as db from '@/lib/db';
 import { configureSupabase } from '@/lib/supabase';
 import { sampleFavorites, sampleTags } from '@/lib/seedData';
@@ -28,12 +28,13 @@ interface AppState {
   settings: AppSettings;
   filter: FilterType;
   searchQuery: string;
-  sortBy: 'newest' | 'oldest' | 'alphabetical' | 'pinned';
+  sortBy: SortOption;
   isLoading: boolean;
   selectedTags: string[];
   selectedFolder: string | null;
   floatingVideo: FloatingVideo | null;
   activeSequentialItemId: string | null;
+  viewMode: 'grid' | 'list';
 }
 
 type Action =
@@ -48,14 +49,15 @@ type Action =
   | { type: 'SET_SETTINGS'; payload: AppSettings }
   | { type: 'SET_FILTER'; payload: FilterType }
   | { type: 'SET_SEARCH_QUERY'; payload: string }
-  | { type: 'SET_SORT_BY'; payload: 'newest' | 'oldest' | 'alphabetical' | 'pinned' }
+  | { type: 'SET_SORT_BY'; payload: SortOption }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_SELECTED_TAGS'; payload: string[] }
   | { type: 'TOGGLE_TAG'; payload: string }
   | { type: 'SET_SELECTED_FOLDER'; payload: string | null }
   | { type: 'SET_FLOATING_VIDEO'; payload: FloatingVideo | null }
   | { type: 'SET_ACTIVE_SEQUENTIAL_ITEM_ID'; payload: string | null }
-  | { type: 'UPDATE_CLIPBOARD_ITEM_SOURCE'; payload: { id: string; sourceId: string } };
+  | { type: 'UPDATE_CLIPBOARD_ITEM_SOURCE'; payload: { id: string; sourceId: string } }
+  | { type: 'SET_VIEW_MODE'; payload: 'grid' | 'list' };
 
 const initialState: AppState = {
   favorites: [],
@@ -77,6 +79,7 @@ const initialState: AppState = {
   selectedFolder: null,
   floatingVideo: null,
   activeSequentialItemId: null,
+  viewMode: 'grid',
 };
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -138,6 +141,8 @@ function appReducer(state: AppState, action: Action): AppState {
       return { ...state, floatingVideo: action.payload };
     case 'SET_ACTIVE_SEQUENTIAL_ITEM_ID':
       return { ...state, activeSequentialItemId: action.payload };
+    case 'SET_VIEW_MODE':
+      return { ...state, viewMode: action.payload };
     default:
       return state;
   }
@@ -164,6 +169,7 @@ interface AppContextType {
   refreshData: () => Promise<void>;
   setFloatingVideo: (video: FloatingVideo | null) => void;
   toggleSequentialCopy: () => void;
+  setViewMode: (mode: 'grid' | 'list') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -214,6 +220,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setFloatingVideo = useCallback((video: FloatingVideo | null) => {
     dispatch({ type: 'SET_FLOATING_VIDEO', payload: video });
+  }, []);
+
+  const setViewMode = useCallback((mode: 'grid' | 'list') => {
+    dispatch({ type: 'SET_VIEW_MODE', payload: mode });
   }, []);
 
   const setSelectedFolder = useCallback((id: string | null) => {
@@ -610,6 +620,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         refreshData,
         setFloatingVideo,
         toggleSequentialCopy,
+        setViewMode,
       }}
     >
       {children}

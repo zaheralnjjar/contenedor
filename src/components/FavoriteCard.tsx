@@ -59,6 +59,7 @@ interface FavoriteCardProps {
   isSelectMode?: boolean;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  viewMode?: 'grid' | 'list';
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -88,7 +89,7 @@ const typeLabels: Record<string, string> = {
   image: 'صورة',
 };
 
-export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect }: FavoriteCardProps) {
+export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect, viewMode = 'grid' }: FavoriteCardProps) {
   const { state, togglePin, deleteFavorite, setFloatingVideo, updateFavorite } = useApp();
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
@@ -272,7 +273,8 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect 
     <>
       <Card
         className={cn(
-          'group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer',
+          'group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer flex',
+          viewMode === 'list' ? 'flex-row items-stretch' : 'flex-col',
           item.isPinned && 'ring-2 ring-primary/20',
           isSelected && 'ring-2 ring-primary bg-primary/5',
           isSelectMode && !isSelected && 'hover:bg-accent/50 opacity-90 hover:opacity-100'
@@ -301,9 +303,18 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect 
         )}
 
         {/* Thumbnail */}
-        {renderThumbnail()}
+        {renderThumbnail() && (
+          <div className={cn(
+            viewMode === 'list' ? 'w-32 sm:w-48 flex-shrink-0 m-2 rounded-lg overflow-hidden' : 'w-full'
+          )}>
+            {renderThumbnail()}
+          </div>
+        )}
 
-        <CardContent className="p-4">
+        <CardContent className={cn(
+          "p-4 flex flex-col min-w-0",
+          viewMode === 'list' ? "flex-1 py-3 px-4" : ""
+        )}>
           {/* Header */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
@@ -367,7 +378,7 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect 
           </div>
 
           {/* Title */}
-          <h3 className="font-semibold text-sm mb-1 line-clamp-2" title={item.title}>
+          <h3 className={cn("font-semibold text-sm mb-1", viewMode === 'list' ? 'line-clamp-1' : 'line-clamp-2')} title={item.title}>
             {item.title}
           </h3>
 
@@ -392,7 +403,7 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect 
               {new URL(item.url).hostname}
             </div>
           )}
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-3" dir="auto">
+          <p className={cn("text-xs text-muted-foreground mb-3", viewMode === 'list' ? 'line-clamp-1' : 'line-clamp-2')} dir="auto">
             {truncateText(item.content, 100)}
           </p>
 
@@ -413,7 +424,7 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect 
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-2">
             <span>{formatRelativeTime(item.createdAt)}</span>
             <div className="flex gap-1">
               <Button

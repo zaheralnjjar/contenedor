@@ -42,8 +42,10 @@ import {
   Folder as FolderIcon,
   Plus,
   Trash2,
+  List,
+  HardDrive
 } from 'lucide-react';
-import type { FilterType } from '@/types';
+import type { FilterType, SortOption } from '@/types';
 import { cn } from '@/lib/utils';
 
 const filterOptions: { value: FilterType; label: string; icon: React.ElementType }[] = [
@@ -56,15 +58,17 @@ const filterOptions: { value: FilterType; label: string; icon: React.ElementType
   { value: 'image', label: 'صور', icon: Image },
 ];
 
-const sortOptions: { value: 'newest' | 'oldest' | 'alphabetical' | 'pinned'; label: string; icon: React.ElementType }[] = [
+const sortOptions: { value: SortOption; label: string; icon: React.ElementType }[] = [
   { value: 'newest', label: 'الأحدث', icon: Clock },
   { value: 'oldest', label: 'الأقدم', icon: Clock },
-  { value: 'alphabetical', label: 'أبجدي', icon: ArrowUpAZ },
+  { value: 'alphabetical', label: 'العنوان', icon: ArrowUpAZ },
+  { value: 'size', label: 'الحجم', icon: HardDrive },
+  { value: 'subject', label: 'الموضوع', icon: FolderIcon },
   { value: 'pinned', label: 'المثبتة', icon: Pin },
 ];
 
 export function FilterBar() {
-  const { state, dispatch, createFolder, setSelectedFolder, deleteFolder } = useApp();
+  const { state, dispatch, createFolder, setSelectedFolder, deleteFolder, setViewMode } = useApp();
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderColor, setNewFolderColor] = useState('#64748b');
@@ -93,7 +97,7 @@ export function FilterBar() {
     dispatch({ type: 'SET_FILTER', payload: filter });
   };
 
-  const handleSortChange = (sort: 'newest' | 'oldest' | 'alphabetical' | 'pinned') => {
+  const handleSortChange = (sort: SortOption) => {
     dispatch({ type: 'SET_SORT_BY', payload: sort });
   };
 
@@ -230,6 +234,26 @@ export function FilterBar() {
                 })}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* View Mode Toggle */}
+            <div className="flex bg-muted/50 rounded-full p-0.5 ml-2 border">
+              <Button
+                variant={state.viewMode === 'list' ? 'default' : 'ghost'}
+                size="icon"
+                className="h-7 w-7 rounded-full shadow-none"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={state.viewMode === 'grid' ? 'default' : 'ghost'}
+                size="icon"
+                className="h-7 w-7 rounded-full shadow-none"
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>

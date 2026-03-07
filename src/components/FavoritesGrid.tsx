@@ -82,8 +82,8 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
     setYtSearched(true);
     try {
       const [videos, channels] = await Promise.all([
-        searchYouTube(query, 8),
-        searchYouTubeChannels(query, 3),
+        searchYouTube(query, 50), // Changed from 8 to 50
+        searchYouTubeChannels(query, 5), // Changed from 3 to 5
       ]);
       setYtVideos(videos);
       setYtChannels(channels);
@@ -162,6 +162,10 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
           return a.createdAt - b.createdAt;
         case 'alphabetical':
           return a.title.localeCompare(b.title, 'ar');
+        case 'size':
+          return ((b.content?.length || 0) + (b.url?.length || 0)) - ((a.content?.length || 0) + (a.url?.length || 0));
+        case 'subject':
+          return a.type.localeCompare(b.type, 'ar');
         case 'pinned':
           return b.createdAt - a.createdAt;
         default:
@@ -499,7 +503,7 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
         if (isInFolder) {
           return (
             <div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className={state.viewMode === 'list' ? "flex flex-col gap-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"}>
                 {filteredAndSortedFavorites.map((item) => (
                   <FavoriteCard
                     key={item.id}
@@ -508,6 +512,7 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
                     isSelectMode={isSelectMode}
                     isSelected={selectedItems.has(item.id)}
                     onSelect={handleSelectItem}
+                    viewMode={state.viewMode}
                   />
                 ))}
               </div>
@@ -562,7 +567,7 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
                   </span>
                 </div>
                 {/* Items Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className={state.viewMode === 'list' ? "flex flex-col gap-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"}>
                   {items.map((item) => (
                     <FavoriteCard
                       key={item.id}
@@ -571,6 +576,7 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
                       isSelectMode={isSelectMode}
                       isSelected={selectedItems.has(item.id)}
                       onSelect={handleSelectItem}
+                      viewMode={state.viewMode}
                     />
                   ))}
                 </div>
