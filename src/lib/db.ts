@@ -106,8 +106,27 @@ export async function updateFavorite(item: FavoriteItem): Promise<void> {
 }
 
 export async function deleteFavorite(id: string): Promise<void> {
+  // Real database deletion
   const database = await initDB();
   await database.delete('favorites', id);
+}
+
+export async function cleanupTrash(): Promise<number> {
+  const database = await initDB();
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - thirtyDaysMs;
+
+  const all = await database.getAll('favorites');
+  let deletedCount = 0;
+
+  for (const item of all) {
+    if (item.isDeleted && item.deletedAt && item.deletedAt < cutoff) {
+      await database.delete('favorites', item.id);
+      deletedCount++;
+    }
+  }
+
+  return deletedCount;
 }
 
 export async function getFavoriteById(id: string): Promise<FavoriteItem | undefined> {

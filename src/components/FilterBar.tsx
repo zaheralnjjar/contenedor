@@ -56,6 +56,7 @@ const filterOptions: { value: FilterType; label: string; icon: React.ElementType
   { value: 'location', label: 'مواقع', icon: MapPin },
   { value: 'text', label: 'نصوص', icon: Type },
   { value: 'image', label: 'صور', icon: Image },
+  { value: 'trash', label: 'المهملات', icon: Trash2 },
 ];
 
 const sortOptions: { value: SortOption; label: string; icon: React.ElementType }[] = [

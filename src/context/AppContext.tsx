@@ -154,6 +154,9 @@ interface AppContextType {
   addFavorite: (item: Omit<FavoriteItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateFavorite: (item: FavoriteItem) => Promise<void>;
   deleteFavorite: (id: string) => Promise<void>;
+  hardDeleteFavorite: (id: string) => Promise<void>;
+  restoreFavorite: (id: string) => Promise<void>;
+  emptyTrash: () => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   addToClipboard: (content: string, type?: ContentType) => Promise<void>;
   clearClipboard: () => Promise<void>;
@@ -182,6 +185,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const loadData = async () => {
       try {
         dispatch({ type: 'SET_LOADING', payload: true });
+
+        await db.cleanupTrash(); // Auto delete items older than 30 days
+
         let [favorites, clipboardHistory, tags, folders, settings] = await Promise.all([
           db.getAllFavorites(),
           db.getClipboardHistory(50),
@@ -270,16 +276,63 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const item = state.favorites.find(f => f.id === id);
       if (item) {
-        for (const tagName of item.tags) {
-          await db.updateTagCount(tagName, -1);
+        if (item.isDeleted) {
+          // If already deleted, hard delete it
+          await db.deleteFavorite(id);
+        } else {
+          // Soft delete
+          const updated = { ...item, isDeleted: true, deletedAt: Date.now() };
+          await db.updateFavorite(updated);
         }
       }
-      await db.deleteFavorite(id);
       dispatch({ type: 'DELETE_FAVORITE', payload: id });
       toast.success('تم الحذف بنجاح');
     } catch (error) {
       console.error('Error deleting favorite:', error);
       toast.error('فشل الحذف');
+    }
+  }, [state.favorites]);
+
+  const hardDeleteFavorite = useCallback(async (id: string) => {
+    try {
+      await db.deleteFavorite(id);
+      dispatch({ type: 'DELETE_FAVORITE', payload: id });
+    } catch (error) {
+      console.error('Error hard deleting favorite:', error);
+    }
+  }, []);
+
+  const restoreFavorite = useCallback(async (id: string) => {
+    try {
+      const item = state.favorites.find(f => f.id === id);
+      if (item && item.isDeleted) {
+        const updated = { ...item };
+        delete updated.isDeleted;
+        delete updated.deletedAt;
+        await db.updateFavorite(updated);
+        dispatch({ type: 'UPDATE_FAVORITE', payload: updated });
+        toast.success('تم الاستعادة بنجاح');
+      }
+    } catch (error) {
+      console.error('Error restoring favorite:', error);
+      toast.error('فشل الاستعادة');
+    }
+  }, [state.favorites]);
+
+  const emptyTrash = useCallback(async () => {
+    try {
+      const deletedItems = state.favorites.filter(f => f.isDeleted);
+      for (const item of deletedItems) {
+        await db.deleteFavorite(item.id);
+      }
+      // Remove from state
+      for (const item of deletedItems) {
+        dispatch({ type: 'DELETE_FAVORITE', payload: item.id });
+      }
+      toast.success('تم إفراغ سلة المهملات');
+    } catch (error) {
+      console.error('Error emptying trash:', error);
+      toast.error('فشل إفراغ سلة المهملات');
     }
   }, [state.favorites]);
 
@@ -605,6 +658,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addFavorite,
         updateFavorite,
         deleteFavorite,
+        hardDeleteFavorite,
+        restoreFavorite,
+        emptyTrash,
         togglePin,
         addToClipboard,
         clearClipboard,

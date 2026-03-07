@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS favorites (
   tags JSONB DEFAULT '[]'::jsonb,
   folder_id UUID,
   is_pinned BOOLEAN DEFAULT false,
+  is_deleted BOOLEAN DEFAULT false,
+  deleted_at BIGINT,
   created_at BIGINT NOT NULL,
   updated_at BIGINT NOT NULL,
   metadata JSONB DEFAULT '{}'::jsonb,
@@ -29,6 +31,20 @@ DO $$ BEGIN
     WHERE table_name = 'favorites' AND column_name = 'folder_id'
   ) THEN
     ALTER TABLE favorites ADD COLUMN folder_id UUID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'favorites' AND column_name = 'is_deleted'
+  ) THEN
+    ALTER TABLE favorites ADD COLUMN is_deleted BOOLEAN DEFAULT false;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'favorites' AND column_name = 'deleted_at'
+  ) THEN
+    ALTER TABLE favorites ADD COLUMN deleted_at BIGINT;
   END IF;
 END $$;
 

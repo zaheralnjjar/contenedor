@@ -10,6 +10,8 @@ export interface FavoriteItem {
   tags: string[];
   folderId?: string;
   isPinned: boolean;
+  isDeleted?: boolean;
+  deletedAt?: number;
   createdAt: number;
   updatedAt: number;
   metadata: {
@@ -45,7 +47,7 @@ export interface ClipboardHistoryItem {
   sourceItemId?: string;
 }
 
-export type FilterType = 'all' | ContentType;
+export type FilterType = 'all' | ContentType | 'trash';
 
 export type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'pinned' | 'size' | 'subject';
 

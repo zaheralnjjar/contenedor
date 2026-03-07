@@ -21,6 +21,7 @@ import {
   Share2,
   Trash2,
   X as XIcon,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -57,7 +58,7 @@ function formatViews(views: number): string {
 }
 
 export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
-  const { state, addFavorite } = useApp();
+  const { state, addFavorite, deleteFavorite, emptyTrash, hardDeleteFavorite, restoreFavorite } = useApp();
   const [ytVideos, setYtVideos] = useState<VideoResult[]>([]);
   const [ytChannels, setYtChannels] = useState<ChannelResult[]>([]);
   const [ytLoading, setYtLoading] = useState(false);
@@ -123,14 +124,21 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
   const filteredAndSortedFavorites = useMemo(() => {
     let result = [...state.favorites];
 
-    // Filter by folder
-    if (state.selectedFolder !== null) {
-      result = result.filter(item => item.folderId === state.selectedFolder);
-    }
+    // Handle soft delete properly
+    if (state.filter === 'trash') {
+      result = result.filter(item => item.isDeleted);
+    } else {
+      result = result.filter(item => !item.isDeleted);
 
-    // Filter by type
-    if (state.filter !== 'all') {
-      result = result.filter(item => item.type === state.filter);
+      // Filter by folder
+      if (state.selectedFolder !== null) {
+        result = result.filter(item => item.folderId === state.selectedFolder);
+      }
+
+      // Filter by type
+      if (state.filter !== 'all') {
+        result = result.filter(item => item.type === state.filter);
+      }
     }
 
     // Filter by search query
@@ -191,24 +199,64 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
     setSelectedItems(newSelected);
   };
 
-  const handleSelectAll = () => {
-    if (selectedItems.size === filteredAndSortedFavorites.length) {
+  const handleSelectAll = useCallback(() => {
+    if (selectedItems.size === filteredAndSortedFavorites.length && filteredAndSortedFavorites.length > 0) {
       setSelectedItems(new Set());
     } else {
       setSelectedItems(new Set(filteredAndSortedFavorites.map(item => item.id)));
     }
-  };
+  }, [filteredAndSortedFavorites, selectedItems.size]);
 
-  const { deleteFavorite } = useApp();
-  const executeBulkDelete = () => {
+  const executeBulkDelete = useCallback(() => {
     if (selectedItems.size === 0) return;
-    if (window.confirm(`هل أنت متأكد من حذف ${selectedItems.size} عنصر؟`)) {
-      selectedItems.forEach(id => deleteFavorite(id));
+    const isTrashMode = state.filter === 'trash';
+    const msg = isTrashMode ? `هل أنت متأكد من الحذف النهائي لـ ${selectedItems.size} عنصر؟` : `هل أنت متأكد من نقل ${selectedItems.size} عنصر إلى المهملات؟`;
+
+    if (window.confirm(msg)) {
+      selectedItems.forEach(id => {
+        if (isTrashMode) {
+          hardDeleteFavorite(id);
+        } else {
+          deleteFavorite(id);
+        }
+      });
       setIsSelectMode(false);
       setSelectedItems(new Set());
-      toast.success(`تم حذف ${selectedItems.size} عنصر بنجاح`);
+      toast.success(isTrashMode ? `تم الحذف النهائي لـ ${selectedItems.size} عنصر` : `تم نقل ${selectedItems.size} عنصر إلى المهملات!`);
     }
-  };
+  }, [selectedItems, state.filter, hardDeleteFavorite, deleteFavorite]);
+
+  const executeBulkRestore = useCallback(() => {
+    if (selectedItems.size === 0) return;
+    selectedItems.forEach(id => restoreFavorite(id));
+    setIsSelectMode(false);
+    setSelectedItems(new Set());
+    toast.success(`تم استعادة ${selectedItems.size} عنصر بنجاح`);
+  }, [selectedItems, restoreFavorite]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block if focused inside input/textarea to not break normal typing
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault();
+        if (!isSelectMode) setIsSelectMode(true);
+        handleSelectAll();
+      } else if (e.key === 'Escape' && isSelectMode) {
+        e.preventDefault();
+        setIsSelectMode(false);
+        setSelectedItems(new Set());
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && isSelectMode) {
+        e.preventDefault();
+        executeBulkDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSelectMode, handleSelectAll, executeBulkDelete]);
 
   const executeBulkShare = async () => {
     if (selectedItems.size === 0) return;
@@ -288,15 +336,27 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={executeBulkShare}
-              disabled={selectedItems.size === 0}
-            >
-              <Share2 className="h-4 w-4 ml-2" />
-              مشاركة
-            </Button>
+            {state.filter === 'trash' && selectedItems.size > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={executeBulkRestore}
+              >
+                <RotateCcw className="h-4 w-4 ml-2" />
+                استعادة
+              </Button>
+            )}
+            {state.filter !== 'trash' && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={executeBulkShare}
+                disabled={selectedItems.size === 0}
+              >
+                <Share2 className="h-4 w-4 ml-2" />
+                مشاركة
+              </Button>
+            )}
             <Button
               variant="destructive"
               size="sm"
@@ -304,15 +364,25 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
               disabled={selectedItems.size === 0}
             >
               <Trash2 className="h-4 w-4 ml-2" />
-              حذف
+              {state.filter === 'trash' ? 'حذف نهائي' : 'حذف'}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Main Header with Select Button */}
+      {/* Main Header with Actions */}
       {!isSelectMode && hasLocalResults && (
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-4 gap-2">
+          {state.filter === 'trash' && (
+            <Button variant="destructive" size="sm" onClick={() => {
+              if (window.confirm('هل أنت متأكد من تفريغ سلة المهملات بالكامل؟ لا يمكن التراجع عن هذه الخطوة.')) {
+                emptyTrash();
+              }
+            }}>
+              <Trash2 className="h-4 w-4 ml-2" />
+              إفراغ السلة
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={toggleSelectionMode}>
             <CheckSquare className="h-4 w-4 ml-2" />
             تحديد عناصر
