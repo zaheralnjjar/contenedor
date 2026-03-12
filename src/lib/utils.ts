@@ -35,6 +35,21 @@ export function detectContentType(content: string): ContentType {
     return 'location';
   }
 
+  // Video URL detection
+  if (isVideoUrl(trimmed)) {
+    return 'video';
+  }
+
+  // Audio URL detection
+  if (isAudioUrl(trimmed)) {
+    return 'audio';
+  }
+
+  // Document URL detection
+  if (isDocumentUrl(trimmed)) {
+    return 'document';
+  }
+
   // Image URL detection
   if (isImageUrl(trimmed)) {
     return 'image';
@@ -122,7 +137,25 @@ export function isLocationCoordinates(text: string): boolean {
 
 export function isImageUrl(url: string): boolean {
   const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i;
+  // Exclude some common non-image domains that might match by coincidence if not careful, though the regex looks at the end of string.
   return imageExtensions.test(url);
+}
+
+export function isVideoUrl(url: string): boolean {
+  const videoExtensions = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i;
+  const videoDomains = /(vimeo\.com|dailymotion\.com|tiktok\.com)/i;
+  return videoExtensions.test(url) || videoDomains.test(url);
+}
+
+export function isAudioUrl(url: string): boolean {
+  const audioExtensions = /\.(mp3|wav|ogg|m4a|flac|aac)$/i;
+  const audioDomains = /(soundcloud\.com|spotify\.com)/i;
+  return audioExtensions.test(url) || audioDomains.test(url);
+}
+
+export function isDocumentUrl(url: string): boolean {
+  const documentExtensions = /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf|csv)$/i;
+  return documentExtensions.test(url);
 }
 
 // YouTube Info Extraction

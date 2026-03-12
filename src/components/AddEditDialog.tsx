@@ -37,6 +37,9 @@ import {
   MapPinned,
   User,
   FolderOpen,
+  AudioLines,
+  Video,
+  FileText,
 } from 'lucide-react';
 import { detectContentType, extractYouTubeInfo, getRandomColor } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -54,6 +57,9 @@ const typeOptions: { value: ContentType; label: string; icon: React.ElementType 
   { value: 'location', label: 'موقع', icon: MapPin },
   { value: 'text', label: 'نص', icon: Type },
   { value: 'image', label: 'صورة', icon: Image },
+  { value: 'video', label: 'فيديو', icon: Video },
+  { value: 'audio', label: 'صوت', icon: AudioLines },
+  { value: 'document', label: 'مستند', icon: FileText },
 ];
 
 export function AddEditDialog({ open, onOpenChange, item }: AddEditDialogProps) {
@@ -307,8 +313,8 @@ export function AddEditDialog({ open, onOpenChange, item }: AddEditDialogProps) 
             />
           </div>
 
-          {/* URL (for website and youtube) */}
-          {(type === 'website' || type === 'youtube' || type === 'image') && (
+          {/* URL (for website, youtube, media) */}
+          {(type === 'website' || type === 'youtube' || type === 'image' || type === 'video' || type === 'audio' || type === 'document') && (
             <div className="space-y-2">
               <Label htmlFor="url">الرابط</Label>
               <div className="relative">
@@ -326,7 +332,7 @@ export function AddEditDialog({ open, onOpenChange, item }: AddEditDialogProps) 
           )}
 
           {/* Thumbnail */}
-          {(type === 'youtube' || type === 'image') && (
+          {(type === 'youtube' || type === 'image' || type === 'video') && (
             <div className="space-y-2">
               <Label htmlFor="thumbnail">رابط الصورة المصغرة</Label>
               <Input

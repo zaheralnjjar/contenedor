@@ -596,14 +596,17 @@ export function FavoritesGrid({ onEdit }: FavoritesGridProps) {
         // In "all" view: group by type/category
         const typeLabels: Record<string, string> = {
           youtube: '🎬 يوتيوب',
-          website: '🌐 مواقع',
+          video: '🎥 فيديو',
+          audio: '🎵 صوت',
+          document: '📄 مستندات',
+          website: '🌐 مواقع ويب',
           phone: '📞 أرقام هواتف',
-          location: '📍 مواقع جغرافية',
-          text: '📝 نصوص وملاحظات',
+          location: '📍 مواقع',
           image: '🖼️ صور',
+          text: '📝 نصوص وملاحظات',
         };
 
-        const typeOrder = ['youtube', 'website', 'phone', 'location', 'text', 'image'];
+        const typeOrder = ['youtube', 'video', 'audio', 'document', 'image', 'website', 'location', 'phone', 'text'];
 
         const grouped = filteredAndSortedFavorites.reduce((acc, item) => {
           if (!acc[item.type]) acc[item.type] = [];

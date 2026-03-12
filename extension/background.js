@@ -145,9 +145,34 @@ function detectType(content) {
     content = content || '';
     const c = content.toLowerCase();
 
+    // YouTube URL detection
     if (c.includes('youtube.com/') || c.includes('youtu.be/')) return 'youtube';
-    if (c.includes('maps.google.') || c.includes('google.com/maps')) return 'location';
+
+    // Google Maps / Location URL detection
+    if (c.includes('maps.google.') || c.includes('google.com/maps') || c.includes('goo.gl/maps') || c.includes('maps.app.goo.gl')) return 'location';
+
+    // Phone number detection
     if (/^05[0-9]{8}$/.test(content.trim()) || /^\\+?[0-9\s-]{9,15}$/.test(content.trim())) return 'phone';
+
+    // Video URL detection
+    const videoExtensions = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i;
+    const videoDomains = /(vimeo\.com|dailymotion\.com|tiktok\.com)/i;
+    if (videoExtensions.test(content) || videoDomains.test(content)) return 'video';
+
+    // Audio URL detection
+    const audioExtensions = /\.(mp3|wav|ogg|m4a|flac|aac)$/i;
+    const audioDomains = /(soundcloud\.com|spotify\.com)/i;
+    if (audioExtensions.test(content) || audioDomains.test(content)) return 'audio';
+
+    // Document URL detection
+    const documentExtensions = /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf|csv)$/i;
+    if (documentExtensions.test(content)) return 'document';
+
+    // Image URL detection
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i;
+    if (imageExtensions.test(content)) return 'image';
+
+    // Website URL detection
     if (/^https?:\/\//i.test(content) || /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(content.trim())) return 'website';
 
     return 'text';

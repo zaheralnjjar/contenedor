@@ -1,4 +1,4 @@
-export type ContentType = 'youtube' | 'website' | 'phone' | 'location' | 'text' | 'image';
+export type ContentType = 'youtube' | 'website' | 'phone' | 'location' | 'text' | 'image' | 'audio' | 'video' | 'document';
 
 export interface FavoriteItem {
   id: string;
@@ -18,6 +18,7 @@ export interface FavoriteItem {
     // YouTube specific
     videoId?: string;
     channelName?: string;
+    artist?: string;
     duration?: string;
     // Website specific
     description?: string;

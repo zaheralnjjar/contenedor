@@ -47,7 +47,10 @@ import {
   Play,
   PhoneCall,
   MonitorPlay,
-  FolderPlus,
+  FolderOpen,
+  AudioLines,
+  Video,
+  FileText,
 } from 'lucide-react';
 import { cn, formatRelativeTime, copyToClipboard, truncateText } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -215,6 +218,69 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect,
       );
     }
 
+    // Video 
+    if (item.type === 'video') {
+      return (
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden group/thumb flex items-center justify-center">
+          <video
+            src={item.content}
+            controls
+            playsInline
+            className="w-full h-full max-h-full object-contain"
+            preload="metadata"
+            onPlay={() => {
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                  title: item.title,
+                  artist: item.metadata.artist || 'فيديو',
+                  artwork: item.thumbnail ? [{ src: item.thumbnail, sizes: '512x512', type: 'image/jpeg' }] : []
+                });
+              }
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Audio
+    if (item.type === 'audio') {
+      return (
+        <div className="relative aspect-video bg-muted rounded-lg overflow-hidden flex flex-col items-center justify-center p-4">
+          <AudioLines className="h-12 w-12 text-primary/50 mb-4" />
+          <audio
+            src={item.content}
+            controls
+            className="w-full"
+            preload="metadata"
+            onPlay={() => {
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                  title: item.title,
+                  artist: item.metadata.artist || 'تسجيل صوتي',
+                  artwork: item.thumbnail ? [{ src: item.thumbnail, sizes: '512x512', type: 'image/jpeg' }] : []
+                });
+              }
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Document
+    if (item.type === 'document') {
+      return (
+        <div
+          className="relative aspect-video bg-muted/30 rounded-lg overflow-hidden flex flex-col items-center justify-center p-4 border border-border cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => window.open(item.content, '_blank', 'noopener,noreferrer')}
+        >
+          <FileText className="h-16 w-16 text-primary/60 mb-2" />
+          <span className="text-sm text-center text-muted-foreground line-clamp-2 px-4">
+            انقر لفتح المستند
+          </span>
+        </div>
+      );
+    }
+
     // Locations with map
     if (item.type === 'location') {
       if (item.thumbnail) {
@@ -351,7 +417,7 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect,
 
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <FolderPlus className="ml-2 h-4 w-4" />
+                    <FolderOpen className="ml-2 h-4 w-4" />
                     <span>نقل إلى مجلد</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -397,6 +463,18 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect,
               {item.metadata.channelName}
             </div>
           )}
+          {item.type === 'video' && item.metadata.channelName && (
+            <div className="text-xs text-muted-foreground mb-2">
+              <Video className="h-3 w-3 inline ml-1" />
+              {item.metadata.channelName}
+            </div>
+          )}
+          {item.type === 'audio' && item.metadata.artist && (
+            <div className="text-xs text-muted-foreground mb-2">
+              <AudioLines className="h-3 w-3 inline ml-1" />
+              {item.metadata.artist}
+            </div>
+          )}
           {item.type === 'website' && item.url && (
             <div className="text-xs text-muted-foreground mb-2 truncate">
               <Globe className="h-3 w-3 inline ml-1" />
@@ -426,6 +504,26 @@ export function FavoriteCard({ item, onEdit, isSelectMode, isSelected, onSelect,
           {/* Footer */}
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-2">
             <span>{formatRelativeTime(item.createdAt)}</span>
+            <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+              {item.type === 'image' && <Image className="h-3 w-3 ml-1" />}
+              {item.type === 'video' && <Video className="h-3 w-3 ml-1" />}
+              {item.type === 'audio' && <AudioLines className="h-3 w-3 ml-1" />}
+              {item.type === 'document' && <FileText className="h-3 w-3 ml-1" />}
+              {item.type === 'youtube' && <Youtube className="h-3 w-3 text-red-500 ml-1" />}
+              {item.type === 'website' && <Globe className="h-3 w-3 ml-1" />}
+              {item.type === 'phone' && <Phone className="h-3 w-3 ml-1" />}
+              {item.type === 'location' && <MapPin className="h-3 w-3 ml-1" />}
+              {item.type === 'text' && <Type className="h-3 w-3 ml-1" />}
+
+              {item.type === 'youtube' ? 'يوتيوب' :
+                item.type === 'image' ? 'صورة' :
+                  item.type === 'video' ? 'فيديو' :
+                    item.type === 'audio' ? 'صوت' :
+                      item.type === 'document' ? 'مستند' :
+                        item.type === 'website' ? 'موقع web' :
+                          item.type === 'phone' ? 'هاتف' :
+                            item.type === 'location' ? 'موقع' : 'نص'}
+            </Badge>
             <div className="flex gap-1">
               <Button
                 variant="ghost"

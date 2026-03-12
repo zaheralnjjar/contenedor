@@ -453,6 +453,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               url = content;
               thumbnail = content;
               toast.success('تم حفظ الصورة 🖼️');
+            } else if (detectedType === 'video') {
+              title = 'مقطع فيديو';
+              url = content;
+              toast.success('تم حفظ مقطع فيديو 🎥');
+            } else if (detectedType === 'audio') {
+              title = 'مقطع صوتي';
+              url = content;
+              toast.success('تم حفظ مقطع صوتي 🎵');
+            } else if (detectedType === 'document') {
+              title = 'مستند / ملف';
+              url = content;
+              toast.success('تم حفظ مستند 📄');
             } else {
               toast.success('تم حفظ النص 📝');
             }
