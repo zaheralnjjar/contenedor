@@ -14,6 +14,9 @@ import {
 } from '@/lib/supabase';
 import { useApp } from './AppContext';
 import { toast } from 'sonner';
+import { SyncReviewDialog } from '@/components/SyncReviewDialog';
+import type { FavoriteItem } from '@/types';
+import { clearDeletedItemIds } from '@/lib/db';
 
 interface SyncContextType {
   status: SyncStatus;
@@ -44,6 +47,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const autoSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
+
+  // Sync Review State
+  const [showReview, setShowReview] = useState(false);
+  const [reviewAddedItems, setReviewAddedItems] = useState<FavoriteItem[]>([]);
+  const [reviewDeletedItems, setReviewDeletedItems] = useState<FavoriteItem[]>([]);
+  const [pendingCloudData, setPendingCloudData] = useState<any>(null);
 
   const isConfigured = isSupabaseConfigured();
 
@@ -161,10 +170,16 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         folders: parsedData.folders || [],
         clipboardHistory: parsedData.clipboard || [],
         settings: parsedData.settings,
+        deletedItems: parsedData.deletedItems || [],
         lastSync: Date.now(),
       });
 
       if (uploadError) throw uploadError;
+
+      // Clear local deleted items queue since they are now deleted from the cloud
+      if (parsedData.deletedItems && parsedData.deletedItems.length > 0) {
+        await clearDeletedItemIds(parsedData.deletedItems);
+      }
 
       // Then, sync from cloud to get any new data
       const { data: cloudData, error: downloadError } = await syncFromCloud();
@@ -172,7 +187,30 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (downloadError) throw downloadError;
 
       if (cloudData) {
-        // Merge cloud data with local data
+        // Calculate differences
+        const localFavorites: FavoriteItem[] = parsedData.favorites;
+        const cloudFavorites: FavoriteItem[] = cloudData.favorites;
+
+        const addedItems = cloudFavorites.filter(cloudItem => {
+          const localItem = localFavorites.find(l => l.id === cloudItem.id);
+          // It's "added" if it doesn't exist locally, or if the cloud version is newer
+          return !localItem || (cloudItem.updatedAt && localItem.updatedAt && cloudItem.updatedAt > localItem.updatedAt);
+        });
+
+        // It's "deleted" from cloud if it exists locally but not in cloud anymore
+        const deletedItems = localFavorites.filter(localItem =>
+          !cloudFavorites.find(c => c.id === localItem.id)
+        );
+
+        if (addedItems.length > 0 || deletedItems.length > 0) {
+          setReviewAddedItems(addedItems);
+          setReviewDeletedItems(deletedItems);
+          setPendingCloudData(cloudData);
+          setShowReview(true);
+          return; // Wait for user confirmation
+        }
+
+        // Merge cloud data with local data if no changes to review
         await importData(JSON.stringify({
           favorites: cloudData.favorites,
           tags: cloudData.tags,
@@ -230,6 +268,32 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     return () => disableAutoSync();
   }, [isAuthenticated, state.settings.backupEnabled, state.settings.backupInterval]);
 
+  const handleConfirmSync = async () => {
+    if (pendingCloudData) {
+      try {
+        await importData(JSON.stringify({
+          favorites: pendingCloudData.favorites,
+          tags: pendingCloudData.tags,
+          folders: pendingCloudData.folders,
+          clipboard: pendingCloudData.clipboardHistory,
+          settings: pendingCloudData.settings,
+        }));
+        const lastSync = Date.now();
+        setStatus(prev => ({ ...prev, lastSync, isSyncing: false }));
+        toast.success('تم دمج التغييرات بنجاح');
+      } catch (error) {
+        console.error('Merge error:', error);
+        toast.error('حدث خطأ أثناء دمج التغييرات');
+        setStatus(prev => ({ ...prev, isSyncing: false }));
+      }
+    }
+  };
+
+  const handleCancelSync = () => {
+    setStatus(prev => ({ ...prev, isSyncing: false }));
+    toast.info('تم تجاهل التغييرات السحابية');
+  };
+
   return (
     <SyncContext.Provider
       value={{
@@ -246,6 +310,14 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      <SyncReviewDialog
+        open={showReview}
+        onOpenChange={setShowReview}
+        addedItems={reviewAddedItems}
+        deletedItems={reviewDeletedItems}
+        onConfirm={handleConfirmSync}
+        onCancel={handleCancelSync}
+      />
     </SyncContext.Provider>
   );
 }

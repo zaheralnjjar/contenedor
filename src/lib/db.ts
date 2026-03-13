@@ -30,10 +30,14 @@ interface FavoritesDB extends DBSchema {
     key: string;
     value: Folder;
   };
+  deleted_items: {
+    key: string;
+    value: { id: string; deletedAt: number };
+  };
 }
 
 const DB_NAME = 'favorites-manager-db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let db: IDBPDatabase<FavoritesDB> | null = null;
 
@@ -69,6 +73,11 @@ export async function initDB(): Promise<IDBPDatabase<FavoritesDB>> {
       // Folders store
       if (!db.objectStoreNames.contains('folders')) {
         db.createObjectStore('folders', { keyPath: 'id' });
+      }
+
+      // Deleted items store (for sync)
+      if (!db.objectStoreNames.contains('deleted_items')) {
+        db.createObjectStore('deleted_items', { keyPath: 'id' });
       }
     },
   });
@@ -109,6 +118,7 @@ export async function deleteFavorite(id: string): Promise<void> {
   // Real database deletion
   const database = await initDB();
   await database.delete('favorites', id);
+  await database.put('deleted_items', { id, deletedAt: Date.now() });
 }
 
 export async function cleanupTrash(): Promise<number> {
@@ -122,6 +132,7 @@ export async function cleanupTrash(): Promise<number> {
   for (const item of all) {
     if (item.isDeleted && item.deletedAt && item.deletedAt < cutoff) {
       await database.delete('favorites', item.id);
+      await database.put('deleted_items', { id: item.id, deletedAt: Date.now() });
       deletedCount++;
     }
   }
@@ -156,6 +167,22 @@ export async function clearClipboardHistory(): Promise<void> {
 export async function deleteClipboardItem(id: string): Promise<void> {
   const database = await initDB();
   await database.delete('clipboard', id);
+}
+
+// Deleted Items Operations (for Sync)
+export async function getDeletedItemIds(): Promise<string[]> {
+  const database = await initDB();
+  const items = await database.getAll('deleted_items');
+  return items.map(item => item.id);
+}
+
+export async function clearDeletedItemIds(ids: string[]): Promise<void> {
+  const database = await initDB();
+  const tx = database.transaction('deleted_items', 'readwrite');
+  for (const id of ids) {
+    await tx.store.delete(id);
+  }
+  await tx.done;
 }
 
 // Tags Operations
@@ -231,15 +258,18 @@ export async function exportData(): Promise<{
   tags: Tag[];
   folders: Folder[];
   settings: AppSettings;
+  deletedItems: string[];
 }> {
   const database = await initDB();
   const favorites = await database.getAll('favorites');
   const clipboard = await database.getAll('clipboard');
   const tags = await database.getAll('tags');
   const folders = await database.getAll('folders');
+  const deletedItemsRecords = await database.getAll('deleted_items');
+  const deletedItems = deletedItemsRecords.map(item => item.id);
   const settings = await getSettings();
 
-  return { favorites, clipboard, tags, folders, settings };
+  return { favorites, clipboard, tags, folders, deletedItems, settings };
 }
 
 export async function importData(data: {

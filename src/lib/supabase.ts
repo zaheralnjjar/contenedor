@@ -26,6 +26,7 @@ export interface SyncData {
   folders: Folder[];
   clipboardHistory: ClipboardHistoryItem[];
   settings: AppSettings;
+  deletedItems?: string[];
   lastSync: number;
 }
 
@@ -80,6 +81,20 @@ export async function syncToCloud(data: SyncData): Promise<{ error: Error | null
   }
 
   try {
+    // Process permanent deletions first
+    if (data.deletedItems && data.deletedItems.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('favorites')
+        .delete()
+        .in('id', data.deletedItems)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Favorites deletion sync error:', deleteError);
+        // Continue anyway so other sync elements can finish, but log warning
+      }
+    }
+
     // Sync favorites
     const { error: favoritesError } = await supabase
       .from('favorites')
