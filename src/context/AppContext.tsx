@@ -160,6 +160,7 @@ interface AppContextType {
   togglePin: (id: string) => Promise<void>;
   addToClipboard: (content: string, type?: ContentType) => Promise<void>;
   clearClipboard: () => Promise<void>;
+  deleteClipboardItem: (id: string) => Promise<void>;
   importData: (data: string, clearFirst?: boolean) => Promise<void>;
   exportData: () => Promise<string>;
   updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
@@ -517,6 +518,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const deleteClipboardItem = useCallback(async (id: string) => {
+    try {
+      await db.deleteClipboardItem(id);
+      dispatch({ type: 'SET_CLIPBOARD_HISTORY', payload: state.clipboardHistory.filter(item => item.id !== id) });
+    } catch (error) {
+      console.error('Error deleting clipboard item:', error);
+      toast.error('فشل حذف العنصر');
+    }
+  }, [state.clipboardHistory]);
+
   const importData = useCallback(async (jsonData: string, clearFirst: boolean = false) => {
     try {
       const data = JSON.parse(jsonData);
@@ -676,6 +687,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         togglePin,
         addToClipboard,
         clearClipboard,
+        deleteClipboardItem,
         importData,
         exportData,
         updateSettings,

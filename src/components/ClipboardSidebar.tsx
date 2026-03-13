@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, Copy, Clock, History, Trash2 } from 'lucide-react';
+import { ClipboardList, Copy, Clock, History, Trash2, BookmarkPlus } from 'lucide-react';
 import { formatRelativeTime, truncateText, copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function ClipboardSidebar() {
-  const { state, addToClipboard, clearClipboard } = useApp();
+  const { state, addToClipboard, addFavorite, clearClipboard, deleteClipboardItem } = useApp();
   const [open, setOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
 
@@ -33,9 +33,26 @@ export function ClipboardSidebar() {
     }
   };
 
-  const handleAddToFavorites = async (content: string) => {
-    await addToClipboard(content);
-    toast.success('تمت الإضافة إلى المفضلات');
+  const handleDeleteItem = async (id: string) => {
+    await deleteClipboardItem(id);
+    toast.success('تم حذف العنصر');
+  };
+
+  const handleSaveItem = async (content: string, type: string) => {
+    try {
+      await addFavorite({
+        type: type as any,
+        title: content.length > 60 ? content.substring(0, 60) + '...' : content,
+        content: content,
+        url: type === 'website' || type === 'youtube' ? content : '',
+        tags: [],
+        isPinned: false,
+        metadata: {},
+      });
+      toast.success('تم حفظ العنصر في المفضلات');
+    } catch {
+      toast.error('فشل حفظ العنصر');
+    }
   };
 
   const handleClearAll = () => {
@@ -192,7 +209,7 @@ export function ClipboardSidebar() {
                       </p>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -206,13 +223,22 @@ export function ClipboardSidebar() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 gap-1"
-                            onClick={() => handleAddToFavorites(item.content)}
+                            className="h-8 gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleSaveItem(item.content, item.type)}
                           >
-                            <ClipboardList className="h-3.5 w-3.5" />
+                            <BookmarkPlus className="h-3.5 w-3.5" />
                             حفظ
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteItem(item.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          حذف
+                        </Button>
                       </div>
                     </div>
                   ))}
