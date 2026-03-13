@@ -278,8 +278,15 @@ export async function importData(data: {
   tags?: Tag[];
   folders?: Folder[];
   settings?: AppSettings;
-}): Promise<void> {
+}, clearFirst: boolean = false): Promise<void> {
   const database = await initDB();
+
+  if (clearFirst) {
+    if (data.favorites) await database.clear('favorites');
+    if (data.clipboard) await database.clear('clipboard');
+    if (data.tags) await database.clear('tags');
+    if (data.folders) await database.clear('folders');
+  }
 
   if (data.favorites) {
     await Promise.all(data.favorites.map(item => database.put('favorites', item)));

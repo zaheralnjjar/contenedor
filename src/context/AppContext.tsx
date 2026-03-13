@@ -160,7 +160,7 @@ interface AppContextType {
   togglePin: (id: string) => Promise<void>;
   addToClipboard: (content: string, type?: ContentType) => Promise<void>;
   clearClipboard: () => Promise<void>;
-  importData: (data: string) => Promise<void>;
+  importData: (data: string, clearFirst?: boolean) => Promise<void>;
   exportData: () => Promise<string>;
   updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
   createTag: (name: string, color?: string) => Promise<void>;
@@ -517,10 +517,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const importData = useCallback(async (jsonData: string) => {
+  const importData = useCallback(async (jsonData: string, clearFirst: boolean = false) => {
     try {
       const data = JSON.parse(jsonData);
-      await db.importData(data);
+      await db.importData(data, clearFirst);
       await refreshData();
       toast.success('تم الاستيراد بنجاح');
     } catch (error) {

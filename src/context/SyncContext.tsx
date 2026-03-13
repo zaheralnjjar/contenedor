@@ -211,13 +211,14 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Merge cloud data with local data if no changes to review
+        // Pass true to clear local tables before import so we don't keep local-only zombies
         await importData(JSON.stringify({
           favorites: cloudData.favorites,
           tags: cloudData.tags,
           folders: cloudData.folders,
           clipboard: cloudData.clipboardHistory,
           settings: cloudData.settings,
-        }));
+        }), true);
       }
 
       const lastSync = Date.now();
@@ -277,7 +278,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
           folders: pendingCloudData.folders,
           clipboard: pendingCloudData.clipboardHistory,
           settings: pendingCloudData.settings,
-        }));
+        }), true);
         const lastSync = Date.now();
         setStatus(prev => ({ ...prev, lastSync, isSyncing: false }));
         toast.success('تم دمج التغييرات بنجاح');
